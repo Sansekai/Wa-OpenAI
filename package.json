@@ -1,0 +1,69 @@
+{
+  "name": "Wa-OpenAI",
+  "version": "1.2.3",
+  "description": "WhatsApp Bot OpenAI Using Lib Baileys Multi Device",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "termux",
+    "whatsapp-openai",
+    "whatsapp-openai",
+    "whatsapp-bot",
+    "whatsapp-baileys",
+    "baileys-md",
+    "bot-wa",
+    "bot-md",
+    "whatsapp-multi-device"
+  ],
+  "base": "https://github.com/DikaArdnt/Hisoka-Morou",
+  "author": "Yusril",
+  "license": "MIT",
+  "dependencies": {
+    "@adiwajshing/baileys": "4.4.0",
+    "@adiwajshing/keyed-db": "^0.2.4",
+    "awesome-phonenumber": "^2.64.0",
+    "axios": "^0.24.0",
+    "canvas": "^2.9.1",
+    "chalk": "^4.1.2",
+    "cheerio": "^1.0.0-rc.10",
+    "child_process": "^1.0.2",
+    "cookie": "^0.5.0",
+    "crypto": "^1.0.1",
+    "figlet": "^1.5.2",
+    "file-type": "^16.5.3",
+    "fluent-ffmpeg": "^2.1.2",
+    "fs": "0.0.1-security",
+    "got": "^11.8.3",
+    "human-readable": "^0.2.1",
+    "jsdom": "^16.4.0",
+    "lowdb": "^2.1.0",
+    "moment-timezone": "^0.5.34",
+    "mongoose": "^6.2.1",
+    "node-cron": "^3.0.0",
+    "node-fetch": "^2.6.1",
+    "openai": "^3.1.0",
+    "os": "^0.1.2",
+    "parse-ms-commonjs": "^1.1.0",
+    "path": "^0.12.7",
+    "perf_hooks": "0.0.1",
+    "pino": "^7.0.5",
+    "qrcode-terminal": "^0.12.0",
+    "util": "^0.12.4",
+    "yargs": "^17.2.1"
+  },
+  "directories": {
+    "lib": "lib",
+    "src": "src"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sansekai/Wa-OpenAI.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Sansekai/Wa-OpenAI/issues"
+  },
+  "homepage": "https://github.com/Sansekai/Wa-OpenAI#readme"
+}
