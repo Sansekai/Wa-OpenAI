@@ -1,6 +1,8 @@
 # WaBot-Broadcast
 
 ***WhatsApp Bot Broadcast NodeJS Using Library [Baileys](https://github.com/adiwajshing/Baileys)***
+## Get OpenAI ApiKey
+Jika limit ApiKey OpenAI sudah habis silahkan buat apikey yang barunya [Disini](https://beta.openai.com/account/api-keys)
 
 ## Install
 **Install on RDP/Windows ✅**
