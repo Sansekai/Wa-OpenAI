@@ -185,7 +185,7 @@ async function startHisoka() {
             else if (reason === DisconnectReason.loggedOut) { console.log(`Device Logged Out, Please Delete Session file yusril.json and Scan Again.`); process.exit(); }
             else if (reason === DisconnectReason.restartRequired) { console.log("Restart Required, Restarting..."); startHisoka(); }
             else if (reason === DisconnectReason.timedOut) { console.log("Connection TimedOut, Reconnecting..."); startHisoka(); }
-            else { console.log(`Unknown DisconnectReason: ${reason}|${connection}`); spawn('restart.cmd'); }
+            else { console.log(`Unknown DisconnectReason: ${reason}|${connection}`); startHisoka(); }
         } else if(connection === 'open') {
             console.log('Bot conneted to server')
             client.sendMessage(global.owner+'@s.whatsapp.net', { text: `Bot started!\n\nSupport creator dengan berdonasi ${donet}` })
