@@ -3,7 +3,7 @@
 ***WhatsApp Bot Broadcast NodeJS Using Library [Baileys](https://github.com/adiwajshing/Baileys)***
 ## Get & Change OpenAI ApiKey
 - Jika limit ApiKey OpenAI sudah habis silahkan buat apikey yang barunya [Disini](https://beta.openai.com/account/api-keys)
-- Ganti ApiKey OpenAI pada file [sansekai.js](https://github.com/Sansekai/Wa-OpenAI/blob/63f66a1fa81b65d33b6aafb4937aa57d6bea6242/sansekai.js#L68)
+- Ganti ApiKey OpenAI pada file [key.json](https://github.com/Sansekai/Wa-OpenAI/blob/8a5a1cce169b8bd0cda10ea1e7dcf7379d0340d6/key.json#L2)
 
 ## Install
 **Install on RDP/Windows ✅**
@@ -19,7 +19,7 @@ $ node index.js
 **Install on Termux ✅**
 
 Silahkan install manual ```node_modules``` terlebih dahulu, karena di termux saat install otomatis melalui ```npm install``` terjadi error.
-<br>Link ```node_modules```: [Klik Disini](https://drive.google.com/file/d/1o_IJMZTIm8Z95Rkmt6EdeHh_tDwJ-5IR/view?usp=sharing)
+<br>Link ```node_modules```: [Klik Disini](https://drive.google.com/file/d/1gKGjseRirX6mQ5LOFULpmnDs7q3Svm8y/view?usp=sharing)
 ```bash
 $ pkg install git nodejs -y
 $ git clone https://github.com/Sansekai/Wa-OpenAI
