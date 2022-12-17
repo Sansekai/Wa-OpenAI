@@ -1,9 +1,14 @@
 # WaBot-Broadcast
 
 ***WhatsApp Bot Broadcast NodeJS Using Library [Baileys](https://github.com/adiwajshing/Baileys)***
+## BACA
+Terdapat 2 tipe yaitu menggunakan command dan tanpa menggunakan perintah.
+- Jika ingin menggunakan command silahkan ganti kata ```true``` menjadi ```false``` di file [key.json](https://github.com/Sansekai/Wa-OpenAI/blob/586dbf2e7bb182b3a649d560e50ef44911fb4db8/key.json#L3)<br>Untuk commandnya menggunakan ```.ai```
+- Jika tidak ingin menggunakan command (auto chat) silahkan ganti kata ```false``` menjadi ```true``` di file [key.json](https://github.com/Sansekai/Wa-OpenAI/blob/586dbf2e7bb182b3a649d560e50ef44911fb4db8/key.json#L3)
+
 ## Get & Change OpenAI ApiKey
 - Jika limit ApiKey OpenAI sudah habis silahkan buat apikey yang barunya [Disini](https://beta.openai.com/account/api-keys)
-- Ganti ApiKey OpenAI pada file [key.json](https://github.com/Sansekai/Wa-OpenAI/blob/48c67b55d7a0ba2ad1d0a5e16207a0005aabd8ed/key.json#L2)
+- Ganti ApiKey OpenAI pada file [key.json](https://github.com/Sansekai/Wa-OpenAI/blob/586dbf2e7bb182b3a649d560e50ef44911fb4db8/key.json#L2)
 
 ## Install
 **Install on RDP/Windows ✅**
