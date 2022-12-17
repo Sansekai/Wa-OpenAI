@@ -1,4 +1,5 @@
 {
-  "keyopenai": "ISI_APIKEY_OPENAI_DISINI",
-  "donasi": "jangan lupa supportnya ya bang :) https://saweria.co/sansekai"
+	"keyopenai": "ISI_APIKEY_OPENAI_DISINI",
+	"autoAI": true,
+	"donasi": "jangan lupa support ya bang :) https://saweria.co/sansekai"
 }
