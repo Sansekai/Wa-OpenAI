@@ -1,4 +1,4 @@
-# WaBot-Broadcast
+# Wa-OpenAI
 
 ***WhatsApp Bot Broadcast NodeJS Using Library [Baileys](https://github.com/adiwajshing/Baileys)***
 ## BACA DULU
