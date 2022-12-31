@@ -1,6 +1,10 @@
 # Wa-OpenAI
 
 ***WhatsApp OpenAI Create with NodeJS Using Library [Baileys](https://github.com/adiwajshing/Baileys)***
+
+## LIVE DEMO
+<a href="https://s.id/bot-ai" target="_blank"><img src="https://raw.githubusercontent.com/Sansekai/yusril-grabbed-result/main/img/button-demo.png" alt="Donate For Yusril" height="40" width="170"></a>
+
 ## BACA DULU
 Terdapat 2 tipe yaitu menggunakan command dan tanpa menggunakan command (auto chat).
 - Jika ingin menggunakan command silakan ganti kata ```true``` menjadi ```false``` di file [key.json](https://github.com/Sansekai/Wa-OpenAI/blob/586dbf2e7bb182b3a649d560e50ef44911fb4db8/key.json#L3)<br>Untuk commandnya menggunakan ```.ai```
