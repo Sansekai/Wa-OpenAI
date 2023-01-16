@@ -3,12 +3,10 @@
 ***WhatsApp OpenAI Create with NodeJS Using Library [Baileys](https://github.com/adiwajshing/Baileys)***
 
 ## BACA DULU
-Terdapat 2 tipe yaitu menggunakan command dan tanpa menggunakan command (auto chat).
-- Jika ingin menggunakan command silakan ganti kata ```true``` menjadi ```false``` di file [key.json](https://github.com/Sansekai/Wa-OpenAI/blob/586dbf2e7bb182b3a649d560e50ef44911fb4db8/key.json#L3)<br>Untuk commandnya menggunakan ```.ai```
-- Jika tidak ingin menggunakan command (auto chat) silakan ganti kata ```false``` menjadi ```true``` di file [key.json](https://github.com/Sansekai/Wa-OpenAI/blob/586dbf2e7bb182b3a649d560e50ef44911fb4db8/key.json#L3)
+Terdapat 2 fitur yaitu ```ChatGPT(text)``` dan ```DALL-E(Text To Image``` tipe yaitu <br>Untuk commandnya menggunakan ```/ai``` dan ```/img```
 
 ## Get & Change OpenAI ApiKey
-- Jika limit ApiKey OpenAI sudah habis silakan buat apikey yang barunya [Disini](https://beta.openai.com/account/api-keys)
+- Silakan buat apikeynya terlebih dahulu [Disini](https://beta.openai.com/account/api-keys)
 - Ganti ApiKey OpenAI pada file [key.json](https://github.com/Sansekai/Wa-OpenAI/blob/586dbf2e7bb182b3a649d560e50ef44911fb4db8/key.json#L2)
 
 ## Install
