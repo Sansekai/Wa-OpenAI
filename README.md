@@ -7,7 +7,7 @@ Terdapat 2 fitur yaitu ```ChatGPT(text)``` dan ```DALL-E(Text To Image``` tipe y
 
 ## Get & Change OpenAI ApiKey
 - Silakan buat apikeynya terlebih dahulu [Disini](https://beta.openai.com/account/api-keys)
-- Ganti ApiKey OpenAI pada file [key.json](https://github.com/Sansekai/Wa-OpenAI/blob/586dbf2e7bb182b3a649d560e50ef44911fb4db8/key.json#L2)
+- Ganti ApiKey OpenAI pada file [key.json](https://github.com/Sansekai/Wa-OpenAI/blob/3bd55740764bcb30084277f6be82d15b6ee25b99/key.json#L2)
 
 ## Install
 **Install on RDP/Windows ✅**
