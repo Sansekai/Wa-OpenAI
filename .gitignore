@@ -3,3 +3,6 @@
 /.pnp
 .pnp.js
 .env
+
+/yusril.json
+yusril.json
