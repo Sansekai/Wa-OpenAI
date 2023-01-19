@@ -36,10 +36,7 @@ module.exports = sansekai = async (client, m, chatUpdate, store) => {
     // const prefix = '!gpt'
 
 
-    var prefix = /^[\\/!#.]/gi.test(body) ? body.match(/^[\\/!#.]/gi) : process.env.WA_PREFIX;
-
-    console.log(prefix);
-    
+    var prefix = /^[\\/!#.]/gi.test(body) ? body.match(/^[\\/!#.]/gi) : process.env.WA_PREFIX;    
     const isCmd2 = body.startsWith(prefix);
     const command = body.replace(prefix, "").trim().split(/ +/).shift().toLowerCase();
     const args = body.trim().split(/ +/).slice(1);
@@ -94,12 +91,12 @@ Tanyakan apa saja kepada AI.
 Cmd: ${prefix}${process.env.WA_PREFIX_IMG}
 Membuat gambar dari teks`)
           break;
-        case `${process.env.WA_PREFIX_CHAT}`: case "openai": 
+        case process.env.WA_PREFIX_CHAT: case "openai": 
           try {
             if (setting.keyopenai === "ISI_APIKEY_OPENAI_DISINI") return reply("Apikey belum diisi\n\nSilahkan isi terlebih dahulu apikeynya di file key.json\n\nApikeynya bisa dibuat di website: https://beta.openai.com/account/api-keys");
             if (!text) return reply(`Chat dengan AI.\n\nContoh:\n${prefix}${command} Apa itu resesi`);
             const configuration = new Configuration({
-              apiKey: process.env.WA_PREFIX_CHAT,
+              apiKey: process.env.WA_OPEN_APIKEY,
             });
             const openai = new OpenAIApi(configuration);
 
@@ -118,12 +115,13 @@ Membuat gambar dari teks`)
             m.reply("Maaf, sepertinya ada yang error :" + err);
           }
           break;
-        case `${process.env.WA_PREFIX_IMG}`: case "ai-img": case "image": case "images":
+        case process.env.WA_PREFIX_IMG: case "ai-img": case "image": case "images":
           try {
+            console.log(process.env.WA_OPEN_APIKEY);
             if (setting.keyopenai === "ISI_APIKEY_OPENAI_DISINI") return reply("Apikey belum diisi\n\nSilahkan isi terlebih dahulu apikeynya di file key.json\n\nApikeynya bisa dibuat di website: https://beta.openai.com/account/api-keys");
             if (!text) return reply(`Membuat gambar dari AI.\n\nContoh:\n${prefix}${command} Wooden house on snow mountain`);
             const configuration = new Configuration({
-              apiKey: process.env.WA_PREFIX_CHAT,
+              apiKey: process.env.WA_OPEN_APIKEY,
             });
             const openai = new OpenAIApi(configuration);
             const response = await openai.createImage({
