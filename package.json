@@ -28,6 +28,7 @@
     "awesome-phonenumber": "^2.64.0",
     "chalk": "^4.1.2",
     "crypto": "^1.0.1",
+    "dotenv": "^16.0.3",
     "figlet": "^1.5.2",
     "fs": "0.0.1-security",
     "lodash": "^4.17.21",

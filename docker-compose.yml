@@ -1,0 +1,9 @@
+version: '3.9'
+
+services:
+  wa-openai:
+    container_name: wa_open_ai
+    restart: always
+    build:
+      context: ./
+      dockerfile: Dockerfile

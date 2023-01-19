@@ -5,6 +5,9 @@ const chalk = require("chalk");
 const { Configuration, OpenAIApi } = require("openai");
 let setting = require("./key.json");
 
+// Environment variables
+require("dotenv").config()
+
 module.exports = sansekai = async (client, m, chatUpdate, store) => {
   try {
     var body =
@@ -27,7 +30,16 @@ module.exports = sansekai = async (client, m, chatUpdate, store) => {
         : "";
     var budy = typeof m.text == "string" ? m.text : "";
     // var prefix = /^[\\/!#.]/gi.test(body) ? body.match(/^[\\/!#.]/gi) : "/"
-    var prefix = /^[\\/!#.]/gi.test(body) ? body.match(/^[\\/!#.]/gi) : "/";
+
+    // pengecekan menggunakan prefix atau tidak
+    // const prefixEnabled = process.env.PREFIX_ENABLED == "true"
+    // const prefix = '!gpt'
+
+
+    var prefix = /^[\\/!#.]/gi.test(body) ? body.match(/^[\\/!#.]/gi) : process.env.WA_PREFIX;
+
+    console.log(prefix);
+    
     const isCmd2 = body.startsWith(prefix);
     const command = body.replace(prefix, "").trim().split(/ +/).shift().toLowerCase();
     const args = body.trim().split(/ +/).slice(1);
@@ -75,14 +87,14 @@ module.exports = sansekai = async (client, m, chatUpdate, store) => {
           m.reply(`*Whatsapp Bot OpenAI*
             
 *(ChatGPT)*
-Cmd: ${prefix}ai 
+Cmd: ${prefix}${process.env.WA_PREFIX_CHAT}
 Tanyakan apa saja kepada AI. 
 
 *(DALL-E)*
-Cmd: ${prefix}img
+Cmd: ${prefix}${process.env.WA_PREFIX_IMG}
 Membuat gambar dari teks`)
           break;
-        case "ai": case "openai": 
+        case `${process.env.WA_PREFIX_CHAT}`: case "openai": 
           try {
             if (setting.keyopenai === "ISI_APIKEY_OPENAI_DISINI") return reply("Apikey belum diisi\n\nSilahkan isi terlebih dahulu apikeynya di file key.json\n\nApikeynya bisa dibuat di website: https://beta.openai.com/account/api-keys");
             if (!text) return reply(`Chat dengan AI.\n\nContoh:\n${prefix}${command} Apa itu resesi`);
@@ -106,7 +118,7 @@ Membuat gambar dari teks`)
             m.reply("Maaf, sepertinya ada yang error :" + err);
           }
           break;
-        case "img": case "ai-img": case "image": case "images":
+        case `${process.env.WA_PREFIX_IMG}`: case "ai-img": case "image": case "images":
           try {
             if (setting.keyopenai === "ISI_APIKEY_OPENAI_DISINI") return reply("Apikey belum diisi\n\nSilahkan isi terlebih dahulu apikeynya di file key.json\n\nApikeynya bisa dibuat di website: https://beta.openai.com/account/api-keys");
             if (!text) return reply(`Membuat gambar dari AI.\n\nContoh:\n${prefix}${command} Wooden house on snow mountain`);
