@@ -101,10 +101,16 @@ Membuat gambar dari teks`)
               presence_penalty: 0.0,
             });
             m.reply(`${response.data.choices[0].text}`);
-          } catch (err) {
-            console.log(err);
-            m.reply("Maaf, sepertinya ada yang error :" + err);
+          } catch (error) {
+          if (error.response) {
+            console.log(error.response.status);
+            console.log(error.response.data);
+            console.log(`${error.response.status}\n\n${error.response.data}`);
+          } else {
+            console.log(error);
+            m.reply("Maaf, sepertinya ada yang error :"+ error.message);
           }
+        }
           break;
         case "img": case "ai-img": case "image": case "images":
           try {
@@ -121,10 +127,16 @@ Membuat gambar dari teks`)
             });
             //console.log(response.data.data[0].url)
             client.sendImage(from, response.data.data[0].url, text, mek);
-          } catch (err) {
-            console.log(err);
-            m.reply("Maaf, sepertinya ada yang error :"+ err);
+            } catch (error) {
+          if (error.response) {
+            console.log(error.response.status);
+            console.log(error.response.data);
+            console.log(`${error.response.status}\n\n${error.response.data}`);
+          } else {
+            console.log(error);
+            m.reply("Maaf, sepertinya ada yang error :"+ error.message);
           }
+        }
           break;
         default: {
           if (isCmd2 && budy.toLowerCase() != undefined) {
