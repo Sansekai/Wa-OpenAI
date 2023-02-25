@@ -99,7 +99,7 @@ Membuat gambar dari teks`)
               top_p: 1, // alternative to sampling with temperature, called nucleus sampling
               frequency_penalty: 0.3, // Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim.
               presence_penalty: 0 // Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.
-          });;
+          });
             m.reply(`${response.data.choices[0].text}`);
           } catch (error) {
           if (error.response) {
