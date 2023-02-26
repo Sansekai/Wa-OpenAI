@@ -1,22 +1,16 @@
 const sessionName = "yusril";
 const donet = "https://saweria.co/sansekai";
-const owner = ["6287878817169"];
+const owner = ["6287878817169"]; // Put your number here ex: ["62xxxxxxxxx"]
 const {
   default: sansekaiConnect,
-  useSingleFileAuthState,
+  useMultiFileAuthState,
   DisconnectReason,
   fetchLatestBaileysVersion,
-  generateForwardMessageContent,
-  prepareWAMessageMedia,
-  generateWAMessageFromContent,
-  generateMessageID,
-  downloadContentFromMessage,
   makeInMemoryStore,
   jidDecode,
   proto,
   getContentType,
 } = require("@adiwajshing/baileys");
-const { state, saveState } = useSingleFileAuthState(`./${sessionName}.json`);
 const pino = require("pino");
 const { Boom } = require("@hapi/boom");
 const fs = require("fs");
@@ -140,6 +134,7 @@ function smsg(conn, m, store) {
 }
 
 async function startHisoka() {
+  const { state, saveCreds } = await useMultiFileAuthState(`./${sessionName ? sessionName : "session"}`);
   const { version, isLatest } = await fetchLatestBaileysVersion();
   console.log(`using WA v${version.join(".")}, isLatest: ${isLatest}`);
   console.log(
@@ -157,7 +152,7 @@ async function startHisoka() {
   const client = sansekaiConnect({
     logger: pino({ level: "silent" }),
     printQRInTerminal: true,
-    browser: ["Wa-OpenAI - Sansekai", "Safari", "3.0"],
+    browser: ["Wa-OpenAI - Sansekai", "Safari", "5.1.7"],
     auth: state,
   });
 
@@ -267,10 +262,10 @@ async function startHisoka() {
         console.log("Connection Lost from Server, reconnecting...");
         startHisoka();
       } else if (reason === DisconnectReason.connectionReplaced) {
-        console.log("Connection Replaced, Another New Session Opened, Please Close Current Session First");
-        process.exit();
+        console.log("Connection Replaced, Another New Session Opened, Please Restart Bot");
+        startHisoka(); //process.exit();
       } else if (reason === DisconnectReason.loggedOut) {
-        console.log(`Device Logged Out, Please Delete Session file yusril.json and Scan Again.`);
+        console.log(`Device Logged Out, Please Delete Folder Session yusril and Scan Again.`);
         process.exit();
       } else if (reason === DisconnectReason.restartRequired) {
         console.log("Restart Required, Restarting...");
@@ -291,7 +286,7 @@ async function startHisoka() {
     // console.log('Connected...', update)
   });
 
-  client.ev.on("creds.update", saveState);
+  client.ev.on("creds.update", saveCreds);
 
   const getBuffer = async (url, options) => {
     try {
