@@ -263,7 +263,7 @@ async function startHisoka() {
         startHisoka();
       } else if (reason === DisconnectReason.connectionReplaced) {
         console.log("Connection Replaced, Another New Session Opened, Please Restart Bot");
-        startHisoka(); //process.exit();
+        process.exit();
       } else if (reason === DisconnectReason.loggedOut) {
         console.log(`Device Logged Out, Please Delete Folder Session yusril and Scan Again.`);
         process.exit();
