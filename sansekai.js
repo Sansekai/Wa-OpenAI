@@ -91,7 +91,7 @@ Membuat gambar dari teks`)
             });
             const openai = new OpenAIApi(configuration);
 
-            const response = await openai.createCompletion({
+            /*const response = await openai.createCompletion({
               model: "text-davinci-003",
               prompt: text,
               temperature: 0, // Higher values means the model will take more risks.
@@ -100,7 +100,12 @@ Membuat gambar dari teks`)
               frequency_penalty: 0.3, // Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim.
               presence_penalty: 0 // Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.
           });
-            m.reply(`${response.data.choices[0].text}`);
+            m.reply(`${response.data.choices[0].text}`);*/
+            const response = await openai.createChatCompletion({
+          model: "gpt-3.5-turbo",
+          messages: [{role: "user", content: text}],
+          });
+          m.reply(`${response.data.choices[0].message.content}`);
           } catch (error) {
           if (error.response) {
             console.log(error.response.status);
