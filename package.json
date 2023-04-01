@@ -22,7 +22,7 @@
   "author": "Yusril",
   "license": "MIT",
   "dependencies": {
-    "@adiwajshing/baileys": "npm:baileys@^6.0.7",
+    "@adiwajshing/baileys": "github:amiruldev20/Baileys",
     "@adiwajshing/keyed-db": "^0.2.4",
     "@hapi/boom": "^10.0.0",
     "awesome-phonenumber": "^2.64.0",
