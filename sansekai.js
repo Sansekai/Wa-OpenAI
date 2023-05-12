@@ -80,7 +80,11 @@ Tanyakan apa saja kepada AI.
 
 *(DALL-E)*
 Cmd: ${prefix}img
-Membuat gambar dari teks`)
+Membuat gambar dari teks
+
+*(Source Code Bot)*
+Cmd: ${prefix}sc
+Menampilkan source code bot yang dipakai`)
           break;
         case "ai": case "openai": 
           try {
