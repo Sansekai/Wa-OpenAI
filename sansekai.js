@@ -143,6 +143,9 @@ Membuat gambar dari teks`)
           }
         }
           break;
+          case "sc": case "script": case "scbot":
+           m.reply("Bot ini menggunakan script dari https://github.com/Sansekai/Wa-OpenAI");
+          break
         default: {
           if (isCmd2 && budy.toLowerCase() != undefined) {
             if (m.chat.endsWith("broadcast")) return;
