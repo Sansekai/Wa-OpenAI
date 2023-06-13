@@ -1,0 +1,52 @@
+{
+  "name": "Wa-OpenAI",
+  "version": "2.0.0",
+  "description": "WhatsApp Bot OpenAI ChatGPT Using Lib Baileys Multi Device",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "termux",
+    "whatsapp-openai",
+    "whatsapp-openai",
+    "whatsapp-bot",
+    "whatsapp-baileys",
+    "baileys-md",
+    "bot-wa",
+    "bot-md",
+    "whatsapp-multi-device"
+  ],
+  "base": "https://github.com/DikaArdnt/Hisoka-Morou",
+  "author": "Yusril",
+  "license": "MIT",
+  "dependencies": {
+    "@adiwajshing/baileys": "github:WhiskeySockets/Baileys",
+    "@adiwajshing/keyed-db": "^0.2.4",
+    "@hapi/boom": "^10.0.0",
+    "awesome-phonenumber": "^2.64.0",
+    "axios": "^1.3.4",
+    "chalk": "^4.1.2",
+    "crypto": "^1.0.1",
+    "figlet": "^1.5.2",
+    "fs": "0.0.1-security",
+    "lodash": "^4.17.21",
+    "openai": "^3.2.1",
+    "pino": "^7.0.5",
+    "qrcode-terminal": "^0.12.0",
+    "util": "^0.12.4"
+  },
+  "directories": {
+    "lib": "lib",
+    "src": "src"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sansekai/Wa-OpenAI.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Sansekai/Wa-OpenAI/issues"
+  },
+  "homepage": "https://github.com/Sansekai/Wa-OpenAI#readme"
+}
