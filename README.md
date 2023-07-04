@@ -5,8 +5,14 @@
 ## BACA DULU
 Terdapat 2 fitur yaitu ```ChatGPT(text)``` dan ```DALL-E(Text To Image).```<br>Untuk commandnya menggunakan ```/ai``` dan ```/img```
 
-## Get & Change OpenAI ApiKey
-- Silakan buat apikeynya terlebih dahulu [Disini](https://beta.openai.com/account/api-keys)
+## Get AccessToken Open AI
+ karna limit dari APIKEY openai itu sangat sedikit , disarankan menggunakan cara dibawah untuk mendapatkan akses ChatGPT
+#### untuk menggunakan CHATGPT 
+- Silahkan login menggunakan akun open ai atau login ke chatgpt terlebih dahulu
+- Lalu get token nya disini [https://chat.openai.com/api/auth/session](https://chat.openai.com/api/auth/session) token diawali dengan `eyxxxxx`
+- isikan pada `accessToken` didalam `key.json`
+
+#### untuk menggunakan DALL-E
 - Ganti ApiKey OpenAI pada file [key.json](https://github.com/Sansekai/Wa-OpenAI/blob/844f41c362250bed10857443c013cbb454807e87/key.json#L2)
 
 ## Install
