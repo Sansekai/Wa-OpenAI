@@ -10,9 +10,7 @@ const {
   jidDecode,
   proto,
   getContentType,
-  Browsers, 
-  fetchLatestWaWebVersion
-} = require("@adiwajshing/baileys");
+} = require("@whiskeysockets/baileys");
 const pino = require("pino");
 const { Boom } = require("@hapi/boom");
 const fs = require("fs");
@@ -137,7 +135,7 @@ function smsg(conn, m, store) {
 
 async function startHisoka() {
   const { state, saveCreds } = await useMultiFileAuthState(`./${sessionName ? sessionName : "session"}`);
-  const { version, isLatest } = await fetchLatestWaWebVersion().catch(() => fetchLatestBaileysVersion());
+  const { version, isLatest } = await fetchLatestBaileysVersion();
   console.log(`using WA v${version.join(".")}, isLatest: ${isLatest}`);
   console.log(
     color(
@@ -154,7 +152,7 @@ async function startHisoka() {
   const client = sansekaiConnect({
     logger: pino({ level: "silent" }),
     printQRInTerminal: true,
-    browser: Browsers.macOS('Desktop'),
+    browser: ["Wa-OpenAI - Sansekai", "Safari", "5.1.7"],
     auth: state,
   });
 
