@@ -1,6 +1,5 @@
 const sessionName = "yusril";
 const donet = "https://saweria.co/sansekai";
-const owner = ["6287878817169"]; // Put your number here ex: ["62xxxxxxxxx"]
 const {
   default: sansekaiConnect,
   useMultiFileAuthState,
@@ -47,8 +46,6 @@ function smsg(conn, m, store) {
       m.message.conversation ||
       m.msg.caption ||
       m.msg.text ||
-      (m.mtype == "listResponseMessage" && m.msg.singleSelectReply.selectedRowId) ||
-      (m.mtype == "buttonsResponseMessage" && m.msg.selectedButtonId) ||
       (m.mtype == "viewOnceMessage" && m.msg.caption) ||
       m.text;
     let quoted = (m.quoted = m.msg.contextInfo ? m.msg.contextInfo.quotedMessage : null);
@@ -122,15 +119,6 @@ function smsg(conn, m, store) {
    * Copy this message
    */
   m.copy = () => exports.smsg(conn, M.fromObject(M.toObject(m)));
-
-  /**
-   *
-   * @param {*} jid
-   * @param {*} forceForward
-   * @param {*} options
-   * @returns
-   */
-  m.copyNForward = (jid = m.chat, forceForward = false, options = {}) => conn.copyNForward(jid, m, forceForward, options);
 
   return m;
 }
@@ -228,25 +216,6 @@ async function startHisoka() {
     return (withoutContact ? "" : v.name) || v.subject || v.verifiedName || PhoneNumber("+" + jid.replace("@s.whatsapp.net", "")).getNumber("international");
   };
 
-  client.setStatus = (status) => {
-    client.query({
-      tag: "iq",
-      attrs: {
-        to: "@s.whatsapp.net",
-        type: "set",
-        xmlns: "status",
-      },
-      content: [
-        {
-          tag: "status",
-          attrs: {},
-          content: Buffer.from(status, "utf-8"),
-        },
-      ],
-    });
-    return status;
-  };
-
   client.public = true;
 
   client.serializeM = (m) => smsg(client, m, store);
@@ -280,10 +249,11 @@ async function startHisoka() {
         startHisoka();
       }
     } else if (connection === "open") {
+      const botNumber = await client.decodeJid(client.user.id);
       console.log(color("Bot success conneted to server", "green"));
       console.log(color("Donate for creator https://saweria.co/sansekai", "yellow"));
       console.log(color("Type /menu to see menu"));
-      client.sendMessage(owner + "@s.whatsapp.net", { text: `Bot started!\n\njangan lupa support ya bang :)\n${donet}` });
+      client.sendMessage(botNumber, { text: `Bot started!\n\njangan lupa support ya bang :)\n${donet}` });
     }
     // console.log('Connected...', update)
   });

@@ -70,8 +70,7 @@ module.exports = sansekai = async (client, m, chatUpdate, store) => {
 
     if (isCmd2) {
       switch (command) {
-        case "help":
-        case "menu":
+        case "help": case "menu": case "start": case "info":
           m.reply(`*Whatsapp Bot OpenAI*
             
 *(ChatGPT)*
@@ -86,25 +85,15 @@ Membuat gambar dari teks
 Cmd: ${prefix}sc
 Menampilkan source code bot yang dipakai`)
           break;
-        case "ai": case "openai": 
+        case "ai": case "openai": case "chatgpt": case "ask":
           try {
+            // tidak perlu diisi apikeynya disini, karena sudah diisi di file key.json
             if (setting.keyopenai === "ISI_APIKEY_OPENAI_DISINI") return reply("Apikey belum diisi\n\nSilahkan isi terlebih dahulu apikeynya di file key.json\n\nApikeynya bisa dibuat di website: https://beta.openai.com/account/api-keys");
             if (!text) return reply(`Chat dengan AI.\n\nContoh:\n${prefix}${command} Apa itu resesi`);
             const configuration = new Configuration({
               apiKey: setting.keyopenai,
             });
             const openai = new OpenAIApi(configuration);
-
-            /*const response = await openai.createCompletion({
-              model: "text-davinci-003",
-              prompt: text,
-              temperature: 0, // Higher values means the model will take more risks.
-              max_tokens: 2048, // The maximum number of tokens to generate in the completion. Most models have a context length of 2048 tokens (except for the newest models, which support 4096).
-              top_p: 1, // alternative to sampling with temperature, called nucleus sampling
-              frequency_penalty: 0.3, // Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim.
-              presence_penalty: 0 // Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.
-          });
-            m.reply(`${response.data.choices[0].text}`);*/
             const response = await openai.createChatCompletion({
           model: "gpt-3.5-turbo",
           messages: [{role: "user", content: text}],
@@ -121,8 +110,9 @@ Menampilkan source code bot yang dipakai`)
           }
         }
           break;
-        case "img": case "ai-img": case "image": case "images":
+        case "img": case "ai-img": case "image": case "images": case "dall-e": case "dalle":
           try {
+            // tidak perlu diisi apikeynya disini, karena sudah diisi di file key.json
             if (setting.keyopenai === "ISI_APIKEY_OPENAI_DISINI") return reply("Apikey belum diisi\n\nSilahkan isi terlebih dahulu apikeynya di file key.json\n\nApikeynya bisa dibuat di website: https://beta.openai.com/account/api-keys");
             if (!text) return reply(`Membuat gambar dari AI.\n\nContoh:\n${prefix}${command} Wooden house on snow mountain`);
             const configuration = new Configuration({
@@ -132,9 +122,9 @@ Menampilkan source code bot yang dipakai`)
             const response = await openai.createImage({
               prompt: text,
               n: 1,
-              size: "512x512",
+              size: "512x512", // you can change the size of the image here
             });
-            //console.log(response.data.data[0].url)
+            //console.log(response.data.data[0].url) // see the response
             client.sendImage(from, response.data.data[0].url, text, mek);
             } catch (error) {
           if (error.response) {
