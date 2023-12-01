@@ -2,10 +2,11 @@ const { BufferJSON, WA_DEFAULT_EPHEMERAL, generateWAMessageFromContent, proto, g
 const fs = require("fs");
 const util = require("util");
 const chalk = require("chalk");
-const { Configuration, OpenAIApi } = require("openai");
+const OpenAI = require("openai");
 let setting = require("./key.json");
+const openai = new OpenAI({ apiKey: setting.keyopenai });
 
-module.exports = sansekai = async (client, m, chatUpdate, store) => {
+module.exports = sansekai = async (client, m, chatUpdate) => {
   try {
     var body =
       m.mtype === "conversation"
@@ -90,20 +91,16 @@ Menampilkan source code bot yang dipakai`)
             // tidak perlu diisi apikeynya disini, karena sudah diisi di file key.json
             if (setting.keyopenai === "ISI_APIKEY_OPENAI_DISINI") return reply("Apikey belum diisi\n\nSilahkan isi terlebih dahulu apikeynya di file key.json\n\nApikeynya bisa dibuat di website: https://beta.openai.com/account/api-keys");
             if (!text) return reply(`Chat dengan AI.\n\nContoh:\n${prefix}${command} Apa itu resesi`);
-            const configuration = new Configuration({
-              apiKey: setting.keyopenai,
+            const chatCompletion = await openai.chat.completions.create({
+              messages: [{ role: 'user', content: q }],
+              model: 'gpt-3.5-turbo'
             });
-            const openai = new OpenAIApi(configuration);
-            const response = await openai.createChatCompletion({
-          model: "gpt-3.5-turbo",
-          messages: [{role: "user", content: text}],
-          });
-          m.reply(`${response.data.choices[0].message.content}`);
+          
+            await m.reply(chatCompletion.choices[0].message.content);
           } catch (error) {
           if (error.response) {
             console.log(error.response.status);
             console.log(error.response.data);
-            console.log(`${error.response.status}\n\n${error.response.data}`);
           } else {
             console.log(error);
             m.reply("Maaf, sepertinya ada yang error :"+ error.message);
@@ -115,17 +112,14 @@ Menampilkan source code bot yang dipakai`)
             // tidak perlu diisi apikeynya disini, karena sudah diisi di file key.json
             if (setting.keyopenai === "ISI_APIKEY_OPENAI_DISINI") return reply("Apikey belum diisi\n\nSilahkan isi terlebih dahulu apikeynya di file key.json\n\nApikeynya bisa dibuat di website: https://beta.openai.com/account/api-keys");
             if (!text) return reply(`Membuat gambar dari AI.\n\nContoh:\n${prefix}${command} Wooden house on snow mountain`);
-            const configuration = new Configuration({
-              apiKey: setting.keyopenai,
-            });
-            const openai = new OpenAIApi(configuration);
-            const response = await openai.createImage({
-              prompt: text,
+            const image = await openai.images.generate({ 
+              model: "dall-e-3",
+              prompt: q, 
               n: 1,
-              size: "512x512", // you can change the size of the image here
-            });
+              size: '1024x1024' 
+              });
             //console.log(response.data.data[0].url) // see the response
-            client.sendImage(from, response.data.data[0].url, text, mek);
+            client.sendImage(from, image.data[0].url, text, mek);
             } catch (error) {
           if (error.response) {
             console.log(error.response.status);
