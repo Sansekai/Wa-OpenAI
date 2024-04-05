@@ -8,24 +8,17 @@ const openai = new OpenAI({ apiKey: setting.keyopenai });
 
 module.exports = sansekai = async (client, m, chatUpdate) => {
   try {
-    var body =
-      m.mtype === "conversation"
-        ? m.message.conversation
-        : m.mtype == "imageMessage"
-        ? m.message.imageMessage.caption
-        : m.mtype == "videoMessage"
-        ? m.message.videoMessage.caption
-        : m.mtype == "extendedTextMessage"
-        ? m.message.extendedTextMessage.text
-        : m.mtype == "buttonsResponseMessage"
-        ? m.message.buttonsResponseMessage.selectedButtonId
-        : m.mtype == "listResponseMessage"
-        ? m.message.listResponseMessage.singleSelectReply.selectedRowId
-        : m.mtype == "templateButtonReplyMessage"
-        ? m.message.templateButtonReplyMessage.selectedId
-        : m.mtype === "messageContextInfo"
-        ? m.message.buttonsResponseMessage?.selectedButtonId || m.message.listResponseMessage?.singleSelectReply.selectedRowId || m.text
-        : "";
+    var body = m.mtype === "conversation" ? m.message.conversation :
+           m.mtype == "imageMessage" ? m.message.imageMessage.caption :
+           m.mtype == "videoMessage" ? m.message.videoMessage.caption :
+           m.mtype == "extendedTextMessage" ? m.message.extendedTextMessage.text :
+           m.mtype == "buttonsResponseMessage" ? m.message.buttonsResponseMessage.selectedButtonId :
+           m.mtype == "listResponseMessage" ? m.message.listResponseMessage.singleSelectReply.selectedRowId :
+           m.mtype == "templateButtonReplyMessage" ? m.message.templateButtonReplyMessage.selectedId :
+           m.mtype === "messageContextInfo" ? m.message.buttonsResponseMessage?.selectedButtonId || 
+           m.message.listResponseMessage?.singleSelectReply.selectedRowId || m.text :
+           "";
+    if (m.mtype === "viewOnceMessageV2") return
     var budy = typeof m.text == "string" ? m.text : "";
     // var prefix = /^[\\/!#.]/gi.test(body) ? body.match(/^[\\/!#.]/gi) : "/"
     var prefix = /^[\\/!#.]/gi.test(body) ? body.match(/^[\\/!#.]/gi) : "/";
