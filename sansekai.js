@@ -44,7 +44,7 @@ module.exports = sansekai = async (client, m, chatUpdate) => {
 
     if (orders[sender].step === 0) {
       reply("مرحباً! كيف يمكنني مساعدتك اليوم؟\n" +
-            "1. محادثة\n" +
+            "1. استمرار محادثة\n" +
             "2. حجز طلبية");
       orders[sender].step = 1;
     } else {
@@ -83,13 +83,13 @@ module.exports = sansekai = async (client, m, chatUpdate) => {
             reply("الرجاء إدخال كمية صحيحة.");
           } else {
             orders[sender].quantity = quantity;
-            reply("لتأكيد الطلب، الرجاء إرسال 'تأكيد'.\n" +
-                  "للإلغاء، الرجاء إرسال 'إلغاء'.");
+            reply("لتأكيد الطلب، الرجاء إرسال '1'.\n" +
+                  "للإلغاء، الرجاء إرسال '2'.");
             orders[sender].step = 4;
           }
           break;
         case 4:
-          if (budy.toLowerCase() === "تأكيد") {
+          if (budy === "1") {
             const order = orders[sender];
             const sizes = ["M", "L", "XL", "XXL", "صحن أناناس"];
             const prices = [100, 130, 150, 200, 60];
@@ -116,19 +116,16 @@ module.exports = sansekai = async (client, m, chatUpdate) => {
             xlsx.utils.sheet_add_aoa(worksheet, [[sender, size, order.quantity, total]], { origin: -1 });
             xlsx.writeFile(workbook, filePath);
 
-            reply(`تم تسجيل الطلبية 
-الإستلام قبل العيد بيوم 
-الرجاء عدم الإحراج لا يوجد إستلام يوم العيد 🤍
-دمتم بخير 🌸.\n` +
+            reply(`شكراً لطلبك! تم حجز طلبيتك بنجاح.\n` +
                   `حجم الصحن: ${size}\n` +
                   `الكمية: ${order.quantity}\n` +
                   `السعر الإجمالي: ${total}₪`);
             delete orders[sender];
-          } else if (budy.toLowerCase() === "إلغاء") {
+          } else if (budy === "2") {
             reply("تم إلغاء الطلب.");
             delete orders[sender];
           } else {
-            reply("الرجاء إرسال 'تأكيد' لتأكيد الطلب أو 'إلغاء' لإلغاء الطلب.");
+            reply("الرجاء إرسال '1' لتأكيد الطلب أو '2' لإلغاء الطلب.");
           }
           break;
         default:
