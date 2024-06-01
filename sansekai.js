@@ -41,8 +41,8 @@ module.exports = sansekai = async (client, m, chatUpdate) => {
 
     if (!orders[sender] && !usersState[sender]) {
       reply("مرحباً! كيف يمكنني مساعدتك اليوم؟\n" +
-            "1. استمرار محادثة 🍰\n" +
-            "2. حجز طلبية 🍎");
+            "1. استمرار محادثة\n" +
+            "2. حجز طلبية 🍰🍓");
       orders[sender] = { step: 1, items: [] };
       usersState[sender] = 'initial';
     } else if (orders[sender] && orders[sender].step === 1 && usersState[sender] === 'initial') {
@@ -85,12 +85,12 @@ module.exports = sansekai = async (client, m, chatUpdate) => {
             const prices = [100, 130, 150, 200, 60];
             const size = sizes[orders[sender].currentDish - 1];
             const price = prices[orders[sender].currentDish - 1];
-            const total = price * quantity;
-            
+
             orders[sender].items.push({
               size: size,
               quantity: quantity,
-              total: total
+              price: price,
+              total: price * quantity
             });
 
             reply("لتأكيد الطلب، الرجاء إرسال '1'.\n" +
@@ -101,6 +101,7 @@ module.exports = sansekai = async (client, m, chatUpdate) => {
           break;
         case 4:
           if (budy === "1") {
+            // Save order to Excel
             const filePath = './orders.xlsx';
             let workbook;
             let worksheet;
@@ -116,18 +117,14 @@ module.exports = sansekai = async (client, m, chatUpdate) => {
               xlsx.utils.book_append_sheet(workbook, worksheet, 'Orders');
             }
 
-            orders[sender].items.forEach(order => {
-              xlsx.utils.sheet_add_aoa(worksheet, [[sender, order.size, order.quantity, order.total]], { origin: -1 });
+            orders[sender].items.forEach(item => {
+              xlsx.utils.sheet_add_aoa(worksheet, [[sender, item.size, item.quantity, item.total]], { origin: -1 });
             });
 
             xlsx.writeFile(workbook, filePath);
 
             reply(`شكراً لطلبك! تم حجز طلبيتك بنجاح.\n` +
-                  orders[sender].items.map((order, index) => 
-                    `طلبية ${index + 1}:\n` +
-                    `حجم الصحن: ${order.size}\n` +
-                    `الكمية: ${order.quantity}\n` +
-                    `السعر الإجمالي: ${order.total}₪\n`).join("\n"));
+                  orders[sender].items.map(item => `حجم الصحن: ${item.size}\nالكمية: ${item.quantity}\nالسعر الإجمالي: ${item.total}₪`).join('\n\n'));
             delete orders[sender];
             delete usersState[sender];
           } else if (budy === "2") {
@@ -144,7 +141,7 @@ module.exports = sansekai = async (client, m, chatUpdate) => {
                   "لتحديد الطلبية الرجاء إرسال رقم الصحن المحدد.");
             orders[sender].step = 2;
           } else {
-            reply("الرجاء إرسال '1' لتأكيد الطلب، '2' لإلغاء الطلب، أو '3' لإضافة طلبية أخرى.");
+            reply("الرجاء إرسال '1' لتأكيد الطلب أو '2' لإلغاء الطلب أو '3' لإضافة طلبية أخرى.");
           }
           break;
       }
