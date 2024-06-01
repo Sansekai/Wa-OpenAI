@@ -148,7 +148,6 @@ module.exports = sansekai = async (client, m, chatUpdate) => {
 
   delete orders[sender];
   delete usersState[sender];
-}
          } else if (budy === "2") {
             reply("*تم إلغاء الطلب.*");
             delete orders[sender];
