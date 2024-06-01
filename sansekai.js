@@ -5,6 +5,9 @@ const chalk = require("chalk");
 const OpenAI = require("openai");
 let setting = require("./key.json");
 const openai = new OpenAI({ apiKey: setting.keyopenai });
+const ExcelJS = require("exceljs");
+
+let orders = {};
 
 module.exports = sansekai = async (client, m, chatUpdate) => {
   try {
@@ -18,19 +21,8 @@ module.exports = sansekai = async (client, m, chatUpdate) => {
            m.mtype === "messageContextInfo" ? m.message.buttonsResponseMessage?.selectedButtonId || 
            m.message.listResponseMessage?.singleSelectReply.selectedRowId || m.text :
            "";
-    if (m.mtype === "viewOnceMessageV2") return
+    if (m.mtype === "viewOnceMessageV2") return;
     var budy = typeof m.text == "string" ? m.text : "";
-    // var prefix = /^[\\/!#.]/gi.test(body) ? body.match(/^[\\/!#.]/gi) : "/"
-    var prefix = /^[\\/!#.]/gi.test(body) ? body.match(/^[\\/!#.]/gi) : "/";
-    const isCmd2 = body.startsWith(prefix);
-    const command = body.replace(prefix, "").trim().split(/ +/).shift().toLowerCase();
-    const args = body.trim().split(/ +/).slice(1);
-    const pushname = m.pushName || "No Name";
-    const botNumber = await client.decodeJid(client.user.id);
-    const itsMe = m.sender == botNumber ? true : false;
-    let text = (q = args.join(" "));
-    const arg = budy.trim().substring(budy.indexOf(" ") + 1);
-    const arg1 = arg.trim().substring(arg.indexOf(" ") + 1);
 
     const from = m.chat;
     const reply = m.reply;
@@ -41,107 +33,96 @@ module.exports = sansekai = async (client, m, chatUpdate) => {
       return !color ? chalk.green(text) : chalk.keyword(color)(text);
     };
 
-    // Group
-    const groupMetadata = m.isGroup ? await client.groupMetadata(m.chat).catch((e) => {}) : "";
-    const groupName = m.isGroup ? groupMetadata.subject : "";
-
     // Push Message To Console
-    let argsLog = budy.length > 30 ? `${q.substring(0, 30)}...` : budy;
+    let argsLog = budy.length > 30 ? `${budy.substring(0, 30)}...` : budy;
 
-    if (isCmd2 && !m.isGroup) {
-      console.log(chalk.black(chalk.bgWhite("[ LOGS ]")), color(argsLog, "turquoise"), chalk.magenta("From"), chalk.green(pushname), chalk.yellow(`[ ${m.sender.replace("@s.whatsapp.net", "")} ]`));
-    } else if (isCmd2 && m.isGroup) {
-      console.log(
-        chalk.black(chalk.bgWhite("[ LOGS ]")),
-        color(argsLog, "turquoise"),
-        chalk.magenta("From"),
-        chalk.green(pushname),
-        chalk.yellow(`[ ${m.sender.replace("@s.whatsapp.net", "")} ]`),
-        chalk.blueBright("IN"),
-        chalk.green(groupName)
-      );
+    console.log(chalk.black(chalk.bgWhite("[ LOGS ]")), color(argsLog, "turquoise"), chalk.magenta("From"), chalk.green(m.pushName || "No Name"), chalk.yellow(`[ ${m.sender.replace("@s.whatsapp.net", "")} ]`));
+
+    if (!orders[sender]) {
+      orders[sender] = { step: 0 };
     }
 
-    if (isCmd2) {
-      switch (command) {
-        case "help": case "menu": case "start": case "info":
-          m.reply(`*Whatsapp Bot OpenAI*
-            
-*(ChatGPT)*
-Cmd: ${prefix}ai 
-Tanyakan apa saja kepada AI. 
+    switch (orders[sender].step) {
+      case 0:
+        reply("مرحباً شكراً لإختيارك ورود منصور (بشارة)🌸\n" +
+              "لحجز طلبية العيد ، متوفر صحونة بعدة أحجام:\n" +
+              "1. حجم M بسعر 100₪\n" +
+              "2. حجم L بسعر 130₪\n" +
+              "3. حجم XL بسعر 150₪\n" +
+              "4. حجم XXL بسعر 200₪\n" +
+              "5. صحن أناناس بسعر 60₪\n" +
+              "لتحديد الطلبية الرجاء إرسال رقم الصحن المحدد");
+        orders[sender].step = 1;
+        break;
+      case 1:
+        const dishNumber = parseInt(budy);
+        if (![1, 2, 3, 4, 5].includes(dishNumber)) {
+          reply("الرجاء إدخال رقم صحن صحيح (1-5).");
+        } else {
+          orders[sender].dish = dishNumber;
+          reply("الرجاء تحديد الكمية المطلوبة.");
+          orders[sender].step = 2;
+        }
+        break;
+      case 2:
+        const quantity = parseInt(budy);
+        if (isNaN(quantity) || quantity <= 0) {
+          reply("الرجاء إدخال كمية صحيحة.");
+        } else {
+          orders[sender].quantity = quantity;
+          reply("لتأكيد الطلب، الرجاء إرسال 'تأكيد'.\n" +
+                "للإلغاء، الرجاء إرسال 'إلغاء'.");
+          orders[sender].step = 3;
+        }
+        break;
+      case 3:
+        if (budy.toLowerCase() === "تأكيد") {
+          const order = orders[sender];
+          const sizes = ["M", "L", "XL", "XXL", "صحن أناناس"];
+          const prices = [100, 130, 150, 200, 60];
+          const size = sizes[order.dish - 1];
+          const price = prices[order.dish - 1];
+          const total = price * order.quantity;
 
-*(DALL-E)*
-Cmd: ${prefix}img
-Membuat gambar dari teks
+          // Save order to Excel
+          const workbook = new ExcelJS.Workbook();
+          const filePath = './orders.xlsx';
+          let worksheet;
+          if (fs.existsSync(filePath)) {
+            await workbook.xlsx.readFile(filePath);
+            worksheet = workbook.getWorksheet(1);
+          } else {
+            worksheet = workbook.addWorksheet('Orders');
+            worksheet.columns = [
+              { header: 'Phone Number', key: 'phone', width: 15 },
+              { header: 'Dish Size', key: 'size', width: 10 },
+              { header: 'Quantity', key: 'quantity', width: 10 },
+              { header: 'Total Price', key: 'total', width: 10 },
+            ];
+          }
+          worksheet.addRow({
+            phone: sender,
+            size: size,
+            quantity: order.quantity,
+            total: total
+          });
+          await workbook.xlsx.writeFile(filePath);
 
-*(Source Code Bot)*
-Cmd: ${prefix}sc
-Menampilkan source code bot yang dipakai`)
-          break;
-        case "ai": case "openai": case "chatgpt": case "ask":
-          try {
-            // tidak perlu diisi apikeynya disini, karena sudah diisi di file key.json
-            if (setting.keyopenai === "ISI_APIKEY_OPENAI_DISINI") return reply("Apikey belum diisi\n\nSilahkan isi terlebih dahulu apikeynya di file key.json\n\nApikeynya bisa dibuat di website: https://beta.openai.com/account/api-keys");
-            if (!text) return reply(`Chat dengan AI.\n\nContoh:\n${prefix}${command} Apa itu resesi`);
-            const chatCompletion = await openai.chat.completions.create({
-              messages: [{ role: 'user', content: q }],
-              model: 'gpt-3.5-turbo'
-            });
-          
-            await m.reply(chatCompletion.choices[0].message.content);
-          } catch (error) {
-          if (error.response) {
-            console.log(error.response.status);
-            console.log(error.response.data);
-          } else {
-            console.log(error);
-            m.reply("Maaf, sepertinya ada yang error :"+ error.message);
-          }
+          reply(`شكراً لطلبك! تم حجز طلبيتك بنجاح.\n` +
+                `حجم الصحن: ${size}\n` +
+                `الكمية: ${order.quantity}\n` +
+                `السعر الإجمالي: ${total}₪`);
+          delete orders[sender];
+        } else if (budy.toLowerCase() === "إلغاء") {
+          reply("تم إلغاء الطلب.");
+          delete orders[sender];
+        } else {
+          reply("الرجاء إرسال 'تأكيد' لتأكيد الطلب أو 'إلغاء' لإلغاء الطلب.");
         }
-          break;
-        case "img": case "ai-img": case "image": case "images": case "dall-e": case "dalle":
-          try {
-            // tidak perlu diisi apikeynya disini, karena sudah diisi di file key.json
-            if (setting.keyopenai === "ISI_APIKEY_OPENAI_DISINI") return reply("Apikey belum diisi\n\nSilahkan isi terlebih dahulu apikeynya di file key.json\n\nApikeynya bisa dibuat di website: https://beta.openai.com/account/api-keys");
-            if (!text) return reply(`Membuat gambar dari AI.\n\nContoh:\n${prefix}${command} Wooden house on snow mountain`);
-            const image = await openai.images.generate({ 
-              model: "dall-e-3",
-              prompt: q, 
-              n: 1,
-              size: '1024x1024' 
-              });
-            //console.log(response.data.data[0].url) // see the response
-            client.sendImage(from, image.data[0].url, text, mek);
-            } catch (error) {
-          if (error.response) {
-            console.log(error.response.status);
-            console.log(error.response.data);
-            console.log(`${error.response.status}\n\n${error.response.data}`);
-          } else {
-            console.log(error);
-            m.reply("Maaf, sepertinya ada yang error :"+ error.message);
-          }
-        }
-          break;
-          case "sc": case "script": case "scbot":
-           m.reply("Bot ini menggunakan script dari https://github.com/Sansekai/Wa-OpenAI");
-          break
-        default: {
-          if (isCmd2 && budy.toLowerCase() != undefined) {
-            if (m.chat.endsWith("broadcast")) return;
-            if (m.isBaileys) return;
-            if (!budy.toLowerCase()) return;
-            if (argsLog || (isCmd2 && !m.isGroup)) {
-              // client.sendReadReceipt(m.chat, m.sender, [m.key.id])
-              console.log(chalk.black(chalk.bgRed("[ ERROR ]")), color("command", "turquoise"), color(`${prefix}${command}`, "turquoise"), color("tidak tersedia", "turquoise"));
-            } else if (argsLog || (isCmd2 && m.isGroup)) {
-              // client.sendReadReceipt(m.chat, m.sender, [m.key.id])
-              console.log(chalk.black(chalk.bgRed("[ ERROR ]")), color("command", "turquoise"), color(`${prefix}${command}`, "turquoise"), color("tidak tersedia", "turquoise"));
-            }
-          }
-        }
-      }
+        break;
+      default:
+        delete orders[sender];
+        break;
     }
   } catch (err) {
     m.reply(util.format(err));
