@@ -2,11 +2,12 @@ const { BufferJSON, WA_DEFAULT_EPHEMERAL, generateWAMessageFromContent, proto, g
 const fs = require("fs");
 const util = require("util");
 const chalk = require("chalk");
-const axios = require("axios"); // إضافة مكتبة axios
+const axios = require("axios");
 const OpenAI = require("openai");
 let setting = require("./key.json");
 const openai = new OpenAI({ apiKey: setting.keyopenai });
 const xlsx = require("xlsx");
+
 const sendToWebhook = (data) => {
   const webhookUrl = `https://trigger.macrodroid.com/8172513a-8642-4445-80f9-edfa8b9a5482/worod?hgem=${data.hgem}&kmeh=${data.kmeh}&nu=${data.nu}&se3r=${data.se3r}`;
   axios.get(webhookUrl)
@@ -50,32 +51,17 @@ module.exports = sansekai = async (client, m, chatUpdate) => {
 
     console.log(chalk.black(chalk.bgWhite("[ LOGS ]")), color(argsLog, "turquoise"), chalk.magenta("From"), chalk.green(m.pushName || "No Name"), chalk.yellow(`[ ${m.sender.replace("@s.whatsapp.net", "")} ]`));
 
-    if (!orders[sender] && !usersState[sender]) {
-      reply("مرحباً! كيف يمكنني مساعدتك اليوم؟\n" +
-            "1. *استمرار محادثة*\n" +
-            "2. *حجز طلبية 🍓🍰*");
-      orders[sender] = { step: 1, items: [] };
-      usersState[sender] = 'initial';
-    } else if (orders[sender] && orders[sender].step === 1 && usersState[sender] === 'initial') {
-      const choice = parseInt(budy);
-      if (choice === 1) {
-        reply("كيف يمكنني مساعدتك في المحادثة؟");
-        delete orders[sender];
-        usersState[sender] = 'chat';
-      } else if (choice === 2) {
-        reply("*لحجز طلبية العيد*، متوفر صحونة بعدة أحجام:\n" +
-              "1. *حجم M بسعر 100₪ 🍇*\n" +
-              "2. *حجم L بسعر 130₪ 🍉*\n" +
-              "3. *حجم XL بسعر 150₪ 🍍*\n" +
-              "4. *حجم XXL بسعر 200₪ 🍒*\n" +
-              "5. *صحن أناناس بسعر 60₪ 🍓*\n" +
-              "*لتحديد الطلبية الرجاء إرسال رقم الصحن المحدد.*");
-        orders[sender].step = 2;
-        usersState[sender] = 'ordering';
-      } else {
-        reply("*الرجاء إدخال خيار صحيح (1 أو 2).*");
-      }
-    } else if (usersState[sender] === 'ordering') {
+    if (budy === "/1") {
+      reply("*لحجز طلبية العيد*، متوفر صحونة بعدة أحجام:\n" +
+            "1. *حجم M بسعر 100₪ 🍇*\n" +
+            "2. *حجم L بسعر 130₪ 🍉*\n" +
+            "3. *حجم XL بسعر 150₪ 🍍*\n" +
+            "4. *حجم XXL بسعر 200₪ 🍒*\n" +
+            "5. *صحن أناناس بسعر 60₪ 🍓*\n" +
+            "*لتحديد الطلبية الرجاء إرسال رقم الصحن المحدد.*");
+      orders[sender] = { step: 2, items: [] };
+      usersState[sender] = 'ordering';
+    } else if (orders[sender] && usersState[sender] === 'ordering') {
       switch (orders[sender].step) {
         case 2:
           const dishNumber = parseInt(budy);
