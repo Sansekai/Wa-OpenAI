@@ -8,7 +8,7 @@ let setting = require("./key.json");
 const openai = new OpenAI({ apiKey: setting.keyopenai });
 const xlsx = require("xlsx");
 const sendToWebhook = (data) => {
-  axios.post("https://trigger.macrodroid.com/d5aa3aee-7481-4f6a-b828-d8e8ea276c21/worod", data)
+  axios.post("https://trigger.macrodroid.com/8172513a-8642-4445-80f9-edfa8b9a5482/worod", data)
     .then(response => {
       console.log("Webhook response:", response.data);
     })
