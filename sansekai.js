@@ -6,6 +6,15 @@ const OpenAI = require("openai");
 let setting = require("./key.json");
 const openai = new OpenAI({ apiKey: setting.keyopenai });
 const xlsx = require("xlsx");
+const sendToWebhook = (data) => {
+  axios.post("https://trigger.macrodroid.com/d5aa3aee-7481-4f6a-b828-d8e8ea276c21/worod", data)
+    .then(response => {
+      console.log("Webhook response:", response.data);
+    })
+    .catch(error => {
+      console.error("Webhook error:", error);
+    });
+};
 
 let orders = {};
 let usersState = {};
@@ -101,34 +110,46 @@ module.exports = sansekai = async (client, m, chatUpdate) => {
           break;
         case 4:
           if (budy === "1") {
-            // Save order to Excel
-            const filePath = './orders.xlsx';
-            let workbook;
-            let worksheet;
+  // Save order to Excel
+  const filePath = './orders.xlsx';
+  let workbook;
+  let worksheet;
 
-            if (fs.existsSync(filePath)) {
-              workbook = xlsx.readFile(filePath);
-              worksheet = workbook.Sheets[workbook.SheetNames[0]];
-            } else {
-              workbook = xlsx.utils.book_new();
-              worksheet = xlsx.utils.aoa_to_sheet([
-                ['رقم الهاتف', 'حجم الصحن', 'الكمية', 'السعر الإجمالي']
-              ]);
-              xlsx.utils.book_append_sheet(workbook, worksheet, 'Orders');
-            }
+  if (fs.existsSync(filePath)) {
+    workbook = xlsx.readFile(filePath);
+    worksheet = workbook.Sheets[workbook.SheetNames[0]];
+  } else {
+    workbook = xlsx.utils.book_new();
+    worksheet = xlsx.utils.aoa_to_sheet([
+      ['رقم الهاتف', 'حجم الصحن', 'الكمية', 'السعر الإجمالي']
+    ]);
+    xlsx.utils.book_append_sheet(workbook, worksheet, 'Orders');
+  }
 
-            orders[sender].items.forEach(item => {
-              xlsx.utils.sheet_add_aoa(worksheet, [[sender, item.size, item.quantity, item.total]], { origin: -1 });
-            });
+  orders[sender].items.forEach(item => {
+    xlsx.utils.sheet_add_aoa(worksheet, [[sender, item.size, item.quantity, item.total]], { origin: -1 });
+  });
 
-            xlsx.writeFile(workbook, filePath);
+  xlsx.writeFile(workbook, filePath);
 
-            reply(`*شكراً لطلبك! تم حجز طلبيتك بنجاح.*\n\n` +
-                  orders[sender].items.map(item => `*حجم الصحن*: ${item.size}\n*الكمية*: ${item.quantity}\n*السعر الإجمالي*: ${item.total}₪`).join('\n\n') +
-                  `\n\n*تم تسجيل الطلبية*\n*الإستلام قبل العيد بيوم*\n*الرجاء عدم الإحراج لا يوجد إستلام يوم العيد 🤍*\n*دمتم بخير 🌸*`);
-            delete orders[sender];
-            delete usersState[sender];
-          } else if (budy === "2") {
+  reply(`*شكراً لطلبك! تم حجز طلبيتك بنجاح.*\n\n` +
+        orders[sender].items.map(item => `*حجم الصحن*: ${item.size}\n*الكمية*: ${item.quantity}\n*السعر الإجمالي*: ${item.total}₪`).join('\n\n') +
+        `\n\n*تم تسجيل الطلبية*\n*الإستلام قبل العيد بيوم*\n*الرجاء عدم الإحراج لا يوجد إستلام يوم العيد 🤍*\n*دمتم بخير 🌸*`);
+
+  // Prepare data for webhook
+  const data = {
+    nu: orders[sender].items[0].nu,
+    hgem: orders[sender].items[0].size,
+    kmeh: orders[sender].items[0].quantity,
+    se3r: orders[sender].items[0].total,
+  };
+
+  sendToWebhook(data);
+
+  delete orders[sender];
+  delete usersState[sender];
+}
+         } else if (budy === "2") {
             reply("*تم إلغاء الطلب.*");
             delete orders[sender];
             delete usersState[sender];
