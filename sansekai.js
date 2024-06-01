@@ -5,7 +5,7 @@ const chalk = require("chalk");
 const OpenAI = require("openai");
 let setting = require("./key.json");
 const openai = new OpenAI({ apiKey: setting.keyopenai });
-const ExcelJS = require("exceljs");
+const xlsx = require("xlsx");
 
 let orders = {};
 
@@ -42,87 +42,99 @@ module.exports = sansekai = async (client, m, chatUpdate) => {
       orders[sender] = { step: 0 };
     }
 
-    switch (orders[sender].step) {
-      case 0:
-        reply("مرحباً شكراً لإختيارك ورود منصور (بشارة)🌸\n" +
-              "لحجز طلبية العيد ، متوفر صحونة بعدة أحجام:\n" +
-              "1. حجم M بسعر 100₪\n" +
-              "2. حجم L بسعر 130₪\n" +
-              "3. حجم XL بسعر 150₪\n" +
-              "4. حجم XXL بسعر 200₪\n" +
-              "5. صحن أناناس بسعر 60₪\n" +
-              "لتحديد الطلبية الرجاء إرسال رقم الصحن المحدد");
-        orders[sender].step = 1;
-        break;
-      case 1:
-        const dishNumber = parseInt(budy);
-        if (![1, 2, 3, 4, 5].includes(dishNumber)) {
-          reply("الرجاء إدخال رقم صحن صحيح (1-5).");
-        } else {
-          orders[sender].dish = dishNumber;
-          reply("الرجاء تحديد الكمية المطلوبة.");
-          orders[sender].step = 2;
-        }
-        break;
-      case 2:
-        const quantity = parseInt(budy);
-        if (isNaN(quantity) || quantity <= 0) {
-          reply("الرجاء إدخال كمية صحيحة.");
-        } else {
-          orders[sender].quantity = quantity;
-          reply("لتأكيد الطلب، الرجاء إرسال 'تأكيد'.\n" +
-                "للإلغاء، الرجاء إرسال 'إلغاء'.");
-          orders[sender].step = 3;
-        }
-        break;
-      case 3:
-        if (budy.toLowerCase() === "تأكيد") {
-          const order = orders[sender];
-          const sizes = ["M", "L", "XL", "XXL", "صحن أناناس"];
-          const prices = [100, 130, 150, 200, 60];
-          const size = sizes[order.dish - 1];
-          const price = prices[order.dish - 1];
-          const total = price * order.quantity;
-
-          // Save order to Excel
-          const workbook = new ExcelJS.Workbook();
-          const filePath = './orders.xlsx';
-          let worksheet;
-          if (fs.existsSync(filePath)) {
-            await workbook.xlsx.readFile(filePath);
-            worksheet = workbook.getWorksheet(1);
+    if (orders[sender].step === 0) {
+      reply("مرحباً! كيف يمكنني مساعدتك اليوم؟\n" +
+            "1. محادثة\n" +
+            "2. حجز طلبية");
+      orders[sender].step = 1;
+    } else {
+      switch (orders[sender].step) {
+        case 1:
+          const choice = parseInt(budy);
+          if (![1, 2].includes(choice)) {
+            reply("الرجاء إدخال خيار صحيح (1 أو 2).");
+          } else if (choice === 1) {
+            reply("كيف يمكنني مساعدتك في المحادثة؟");
+            delete orders[sender];
           } else {
-            worksheet = workbook.addWorksheet('Orders');
-            worksheet.columns = [
-              { header: 'Phone Number', key: 'phone', width: 15 },
-              { header: 'Dish Size', key: 'size', width: 10 },
-              { header: 'Quantity', key: 'quantity', width: 10 },
-              { header: 'Total Price', key: 'total', width: 10 },
-            ];
+            reply("لحجز طلبية العيد، متوفر صحونة بعدة أحجام:\n" +
+                  "1. حجم M بسعر 100₪\n" +
+                  "2. حجم L بسعر 130₪\n" +
+                  "3. حجم XL بسعر 150₪\n" +
+                  "4. حجم XXL بسعر 200₪\n" +
+                  "5. صحن أناناس بسعر 60₪\n" +
+                  "لتحديد الطلبية الرجاء إرسال رقم الصحن المحدد.");
+            orders[sender].step = 2;
           }
-          worksheet.addRow({
-            phone: sender,
-            size: size,
-            quantity: order.quantity,
-            total: total
-          });
-          await workbook.xlsx.writeFile(filePath);
+          break;
+        case 2:
+          const dishNumber = parseInt(budy);
+          if (![1, 2, 3, 4, 5].includes(dishNumber)) {
+            reply("الرجاء إدخال رقم صحن صحيح (1-5).");
+          } else {
+            orders[sender].dish = dishNumber;
+            reply("الرجاء تحديد الكمية المطلوبة.");
+            orders[sender].step = 3;
+          }
+          break;
+        case 3:
+          const quantity = parseInt(budy);
+          if (isNaN(quantity) || quantity <= 0) {
+            reply("الرجاء إدخال كمية صحيحة.");
+          } else {
+            orders[sender].quantity = quantity;
+            reply("لتأكيد الطلب، الرجاء إرسال 'تأكيد'.\n" +
+                  "للإلغاء، الرجاء إرسال 'إلغاء'.");
+            orders[sender].step = 4;
+          }
+          break;
+        case 4:
+          if (budy.toLowerCase() === "تأكيد") {
+            const order = orders[sender];
+            const sizes = ["M", "L", "XL", "XXL", "صحن أناناس"];
+            const prices = [100, 130, 150, 200, 60];
+            const size = sizes[order.dish - 1];
+            const price = prices[order.dish - 1];
+            const total = price * order.quantity;
 
-          reply(`شكراً لطلبك! تم حجز طلبيتك بنجاح.\n` +
-                `حجم الصحن: ${size}\n` +
-                `الكمية: ${order.quantity}\n` +
-                `السعر الإجمالي: ${total}₪`);
+            // Save order to Excel
+            const filePath = './orders.xlsx';
+            let workbook;
+            let worksheet;
+
+            if (fs.existsSync(filePath)) {
+              workbook = xlsx.readFile(filePath);
+              worksheet = workbook.Sheets[workbook.SheetNames[0]];
+            } else {
+              workbook = xlsx.utils.book_new();
+              worksheet = xlsx.utils.aoa_to_sheet([
+                ['Phone Number', 'Dish Size', 'Quantity', 'Total Price']
+              ]);
+              xlsx.utils.book_append_sheet(workbook, worksheet, 'Orders');
+            }
+
+            xlsx.utils.sheet_add_aoa(worksheet, [[sender, size, order.quantity, total]], { origin: -1 });
+            xlsx.writeFile(workbook, filePath);
+
+            reply(`تم تسجيل الطلبية 
+الإستلام قبل العيد بيوم 
+الرجاء عدم الإحراج لا يوجد إستلام يوم العيد 🤍
+دمتم بخير 🌸.\n` +
+                  `حجم الصحن: ${size}\n` +
+                  `الكمية: ${order.quantity}\n` +
+                  `السعر الإجمالي: ${total}₪`);
+            delete orders[sender];
+          } else if (budy.toLowerCase() === "إلغاء") {
+            reply("تم إلغاء الطلب.");
+            delete orders[sender];
+          } else {
+            reply("الرجاء إرسال 'تأكيد' لتأكيد الطلب أو 'إلغاء' لإلغاء الطلب.");
+          }
+          break;
+        default:
           delete orders[sender];
-        } else if (budy.toLowerCase() === "إلغاء") {
-          reply("تم إلغاء الطلب.");
-          delete orders[sender];
-        } else {
-          reply("الرجاء إرسال 'تأكيد' لتأكيد الطلب أو 'إلغاء' لإلغاء الطلب.");
-        }
-        break;
-      default:
-        delete orders[sender];
-        break;
+          break;
+      }
     }
   } catch (err) {
     m.reply(util.format(err));
