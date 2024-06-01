@@ -8,7 +8,8 @@ let setting = require("./key.json");
 const openai = new OpenAI({ apiKey: setting.keyopenai });
 const xlsx = require("xlsx");
 const sendToWebhook = (data) => {
-  axios.post("https://trigger.macrodroid.com/8172513a-8642-4445-80f9-edfa8b9a5482/worod", data)
+  const webhookUrl = `https://trigger.macrodroid.com/8172513a-8642-4445-80f9-edfa8b9a5482/worod?hgem=${data.hgem}&kmeh=${data.kmeh}&nu=${data.nu}&se3r=${data.se3r}`;
+  axios.get(webhookUrl)
     .then(response => {
       console.log("Webhook response:", response.data);
     })
@@ -139,7 +140,7 @@ module.exports = sansekai = async (client, m, chatUpdate) => {
 
             // Prepare data for webhook
             const data = {
-              nu: sender, // إضافة حقل رقم الهاتف للـ webhook
+              nu: sender.replace("@s.whatsapp.net", ""), // تحويل الرقم إلى التنسيق المطلوب
               hgem: orders[sender].items[0].size,
               kmeh: orders[sender].items[0].quantity,
               se3r: orders[sender].items[0].total,
