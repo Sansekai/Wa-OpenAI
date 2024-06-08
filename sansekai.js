@@ -22,6 +22,15 @@ const sendToWebhook = (data) => {
 let orders = {};
 let usersState = {};
 
+const calculateCost = (type, value) => {
+  switch (type) {
+    case 'עבודת לילה':
+      return value * 500;
+    default:
+      return 0;
+  }
+};
+
 module.exports = sansekai = async (client, m, chatUpdate) => {
   try {
     var body = m.mtype === "conversation" ? m.message.conversation :
@@ -51,119 +60,223 @@ module.exports = sansekai = async (client, m, chatUpdate) => {
 
     console.log(chalk.black(chalk.bgWhite("[ LOGS ]")), color(argsLog, "turquoise"), chalk.magenta("From"), chalk.green(m.pushName || "No Name"), chalk.yellow(`[ ${m.sender.replace("@s.whatsapp.net", "")} ]`));
 
-    if (budy === "/1") {
-      reply("*لحجز طلبية العيد*، متوفر صحونة بعدة أحجام:\n" +
-            "1. *حجم M بسعر 100₪ 🍇*\n" +
-            "2. *حجم L بسعر 130₪ 🍉*\n" +
-            "3. *حجم XL بسعر 150₪ 🍍*\n" +
-            "4. *حجم XXL بسعر 200₪ 🍒*\n" +
-            "5. *صحن أناناس بسعر 60₪ 🍓*\n" +
-            "*لتحديد الطلبية الرجاء إرسال رقم الصحن المحدد.*");
-      orders[sender] = { step: 2, items: [] };
+    if (budy === "/רישום" || budy === "/יומן") {
+      reply("🔹 *רישום עבודה*\n" +
+            "1️⃣ יום עבודה/חופש\n" +
+            "2️⃣ עבודת לילה\n" +
+            "3️⃣ תדלוק סולר\n" +
+            "4️⃣ קבלת תשלום\n" +
+            "נא לבחור אופציה ולשלוח את מספרה.");
+      orders[sender] = { step: 1, items: [] };
       usersState[sender] = 'ordering';
+    } else if (budy === "/רישום שלי") {
+      reply("🔸 *הרישום שלי*\n" +
+            "1️⃣ ס\"כה ימי עבודה\n" +
+            "2️⃣ ס\"כה עבודת לילה\n" +
+            "3️⃣ סכ\"ה ימי עבודות לילה\n" +
+            "4️⃣ תשלומים עבור עבודות לילה\n" +
+            "5️⃣ מפריעות שקובלו\n" +
+            "6️⃣ ס\"כה תדלוק סולר\n" +
+            "7️⃣ לילות שלא שולמו\n" +
+            "נא לבחור אופציה ולשלוח את מספרה.");
+      usersState[sender] = 'viewing';
+    } else if (budy === "/סכה") {
+      const totalDays = getTotal(sender, 'יום עבודה');
+      const totalNightWork = getTotal(sender, 'עבודת לילה');
+      const totalFuel = getTotal(sender, 'תדלוק סולר');
+      const totalPayment = getTotal(sender, 'קבלת תשלום - עבור עבודות לילה');
+      const unpaidNights = getUnpaidNights(sender);
+      
+      const dataMessage = 
+        `🔸 *הנתונים שלך*\n` +
+        `🗓️ ס"כה ימי עבודה: ${totalDays}\n` +
+        `🌙 ס"כה עבודת לילה: ${totalNightWork}\n` +
+        `⛽ ס"כה תדלוק סולר: ${totalFuel} ליטרים\n` +
+        `💵 תשלומים עבור עבודות לילה: ${totalPayment} ש"ח\n` +
+        `🌙 לילות שלא שולמו: ${unpaidNights}`;
+
+      reply(dataMessage);
     } else if (orders[sender] && usersState[sender] === 'ordering') {
       switch (orders[sender].step) {
-        case 2:
-          const dishNumber = parseInt(budy);
-          if (![1, 2, 3, 4, 5].includes(dishNumber)) {
-            reply("*الرجاء إدخال رقم صحن صحيح (1-5).*");
-          } else {
-            orders[sender].currentDish = dishNumber;
-            reply("*الرجاء تحديد الكمية المطلوبة.*");
-            orders[sender].step = 3;
+        case 1:
+          switch (budy) {
+            case "1":
+              reply("1️⃣ יום עבודה\n2️⃣ חופש\nנא לבחור אופציה ולשלוח את מספרה.");
+              orders[sender].step = 1.1;
+              break;
+            case "2":
+              const today = new Date();
+              const dateStr = today.toISOString().split('T')[0];
+              if (!canRegisterNightWork(sender, dateStr)) {
+                reply("❌ כבר נרשמה עבודת לילה עבור היום.");
+                delete orders[sender];
+                delete usersState[sender];
+                break;
+              }
+              reply("🌙 עבודת לילה נרשמה בהצלחה.");
+              addToTotal(sender, 'עבודת לילה', 1, dateStr);
+              reply(`עלות: ${calculateCost('עבודת לילה', 1)} ש"ח`);
+              delete orders[sender];
+              delete usersState[sender];
+              break;
+            case "3":
+              reply("⛽ הכנס כמות ליטרים.");
+              orders[sender].step = 3;
+              break;
+            case "4":
+              reply("💵 קבלת תשלום\n1️⃣ מפריעה\n2️⃣ עבור עבודות לילה\nנא לבחור אופציה ולשלוח את מספרה.");
+              orders[sender].step = 4;
+              break;
+            default:
+              reply("❌ נא לבחור אופציה תקפה.");
+              break;
           }
           break;
-        case 3:
-          const quantity = parseInt(budy);
-          if (isNaN(quantity) || quantity <= 0) {
-            reply("*الرجاء إدخال كمية صحيحة.*");
+        case 1.1:
+          if (budy === "1") {
+            const today = new Date();
+            if (today.getDay() === 6) {
+              reply("❌ לא ניתן לרשום יום עבודה בשבת.");
+              delete orders[sender];
+              delete usersState[sender];
+              break;
+            }
+            const dateStr = today.toISOString().split('T')[0];
+            if (!canRegisterWorkDay(sender, dateStr)) {
+              reply("❌ כבר נרשם יום עבודה עבור היום.");
+              delete orders[sender];
+              delete usersState[sender];
+              break;
+            }
+            reply("✅ יום עבודה נרשם בהצלחה המשך יום נעים.");
+            addToTotal(sender, 'יום עבודה', 1, dateStr);
+          } else if (budy === "2") {
+            reply("✅ נרשם בהצלחה חופשה נעימה.");
+            addToTotal(sender, 'חופש', 1);
           } else {
-            const sizes = ["M", "L", "XL", "XXL", "صحن أناناس"];
-            const prices = [100, 130, 150, 200, 60];
-            const size = sizes[orders[sender].currentDish - 1];
-            const price = prices[orders[sender].currentDish - 1];
-
-            orders[sender].items.push({
-              size: size,
-              quantity: quantity,
-              price: price,
-              total: price * quantity
-            });
-
-            reply("*لتأكيد الطلب، الرجاء إرسال '1'.*\n" +
-                  "*للإلغاء، الرجاء إرسال '2'.*\n" +
-                  "*لإضافة طلبية أخرى، الرجاء إرسال '3'.*");
-            orders[sender].step = 4;
+            reply("❌ נא לבחור אופציה תקפה.");
+          }
+          delete orders[sender];
+          delete usersState[sender];
+          break;
+        case 3:
+          const quantity = parseFloat(budy);
+          if (isNaN(quantity) || quantity <= 0) {
+            reply("❌ נא להכניס כמות ליטרים תקפה.");
+          } else {
+            reply("✅ נרשמם בהצלחה!");
+            addToTotal(sender, 'תדלוק סולר', quantity);
+            delete orders[sender];
+            delete usersState[sender];
           }
           break;
         case 4:
           if (budy === "1") {
-            // Save order to Excel
-            const filePath = './orders.xlsx';
-            let workbook;
-            let worksheet;
-
-            if (fs.existsSync(filePath)) {
-              workbook = xlsx.readFile(filePath);
-              worksheet = workbook.Sheets[workbook.SheetNames[0]];
-            } else {
-              workbook = xlsx.utils.book_new();
-              worksheet = xlsx.utils.aoa_to_sheet([
-                ['رقم الهاتف', 'حجم الصحن', 'الكمية', 'السعر الإجمالي']
-              ]);
-              xlsx.utils.book_append_sheet(workbook, worksheet, 'Orders');
-            }
-
-            orders[sender].items.forEach(item => {
-              xlsx.utils.sheet_add_aoa(worksheet, [[sender, item.size, item.quantity, item.total]], { origin: -1 });
-            });
-
-            xlsx.writeFile(workbook, filePath);
-
-            reply(`*شكراً لطلبك! تم حجز طلبيتك بنجاح.*\n\n` +
-                  orders[sender].items.map(item => `*حجم الصحن*: ${item.size}\n*الكمية*: ${item.quantity}\n*السعر الإجمالي*: ${item.total}₪`).join('\n\n') +
-                  `\n\n*تم تسجيل الطلبية*\n*الإستلام قبل العيد بيوم*\n*الرجاء عدم الإحراج لا يوجد إستلام يوم العيد 🤍*\n*دمتم بخير 🌸*`);
-
-            // Prepare data for webhook
-            const data = {
-              nu: sender.replace("@s.whatsapp.net", ""), // تحويل الرقم إلى التنسيق المطلوب
-              hgem: orders[sender].items[0].size,
-              kmeh: orders[sender].items[0].quantity,
-              se3r: orders[sender].items[0].total,
-            };
-
-            sendToWebhook(data);
-
-            delete orders[sender];
-            delete usersState[sender];
+            reply("💵 הכנס סכום מפריעה.");
+            orders[sender].step = 4.1;
           } else if (budy === "2") {
-            reply("*تم إلغاء الطلب.*");
+            reply("💵 הכנס סכום שקבלת עבור עבודת לילה.");
+            orders[sender].step = 4.2;
+          } else {
+            reply("❌ נא לבחור אופציה תקפה.");
+          }
+          break;
+        case 4.1:
+        case 4.2:
+          const amount = parseFloat(budy);
+          if (isNaN(amount) || amount <= 0) {
+            reply("❌ נא להכניס סכום תקף.");
+          } else {
+            reply("✅ התשלום נרשם בהצלחה.");
+            const type = orders[sender].step === 4.1 ? 'מפריעה' : 'קבלת תשלום - עבור עבודות לילה';
+            addToTotal(sender, type, amount);
             delete orders[sender];
             delete usersState[sender];
-          } else if (budy === "3") {
-            reply("*لحجز طلبية العيد*، متوفر صحونة بعدة أحجام:\n" +
-                  "1. *حجم M بسعر 100₪ 🍇*\n" +
-                  "2. *حجم L بسعر 130₪ 🍉*\n" +
-                  "3. *حجم XL بسعر 150₪ 🍍*\n" +
-                  "4. *حجم XXL بسعر 200₪ 🍒*\n" +
-                  "5. *صحن أناناس بسعر 60₪ 🍓*\n" +
-                  "*لتحديد الطلبية الرجاء إرسال رقم الصحن المحدد.*");
-            orders[sender].step = 2;
-          } else {
-            reply("*الرجاء إرسال '1' لتأكيد الطلب أو '2' لإلغاء الطلب أو '3' لإضافة طلبية أخرى.*");
           }
+          break;
+      }
+    } else if (usersState[sender] === 'viewing') {
+      switch (budy) {
+        case "1":
+          reply(`🗓️ ס"כה ימי עבודה: ${getTotal(sender, 'יום עבודה')}`);
+          break;
+        case "2":
+          reply(`🌙 ס"כה עבודת לילה: ${getTotal(sender, 'עבודת לילה')}`);
+          break;
+        case "3":
+          reply(`🌙 ס"כה ימי עבודות לילה: ${getTotal(sender, 'עבודת לילה')}`);
+          break;
+        case "4":
+          reply(`💵 תשלומים עבור עבודות לילה: ${getTotal(sender, 'קבלת תשלום - עבור עבודות לילה')} ש"ח`);
+          break;
+        case "5":
+          reply(`💵 מפריעות שקובלו: ${getTotal(sender, 'מפריעה')} ש"ח`);
+          break;
+        case "6":
+          reply(`⛽ ס"כה תדלוק סולר: ${getTotal(sender, 'תדלוק סולר')} ליטרים`);
+          break;
+        case "7":
+          reply(`🌙 לילות שלא שולמו: ${getUnpaidNights(sender)}`);
+          break;
+        default:
+          reply("❌ נא לבחור אופציה תקפה.");
           break;
       }
     }
   } catch (err) {
-    console.error(err); // تحسين معالجة الأخطاء
+    console.log(chalk.redBright("[ ERROR ]"), err);
+    reply("❌ התרחשה שגיאה. נא לנסות שוב.");
   }
 };
 
-let file = require.resolve(__filename);
-fs.watchFile(file, () => {
-  fs.unwatchFile(file);
-  console.log(chalk.redBright(`Update ${__filename}`));
-  delete require.cache[file];
-  require(file);
-});
+// Function to get total of a specific type
+const getTotal = (sender, type) => {
+  const data = fs.readFileSync(`./data/${sender}.json`, 'utf8');
+  const parsedData = JSON.parse(data);
+  return parsedData[type] || 0;
+};
+
+// Function to add to total of a specific type
+const addToTotal = (sender, type, value, date = null) => {
+  let data = {};
+  try {
+    data = JSON.parse(fs.readFileSync(`./data/${sender}.json`, 'utf8'));
+  } catch (err) {
+    console.log(chalk.yellow(`[ WARNING ] No existing data for ${sender}. Creating new file.`));
+  }
+  if (!data[type]) data[type] = 0;
+  data[type] += value;
+
+  if (type === 'עבודת לילה' && date) {
+    if (!data['nightWorkDates']) data['nightWorkDates'] = [];
+    data['nightWorkDates'].push(date);
+  }
+
+  fs.writeFileSync(`./data/${sender}.json`, JSON.stringify(data));
+};
+
+// Function to check if can register night work
+const canRegisterNightWork = (sender, date) => {
+  let data = {};
+  try {
+    data = JSON.parse(fs.readFileSync(`./data/${sender}.json`, 'utf8'));
+  } catch (err) {
+    console.log(chalk.yellow(`[ WARNING ] No existing data for ${sender}. Creating new file.`));
+    return true;
+  }
+  return !data['nightWorkDates'] || !data['nightWorkDates'].includes(date);
+};
+
+// Function to get unpaid nights
+const getUnpaidNights = (sender) => {
+  let data = {};
+  try {
+    data = JSON.parse(fs.readFileSync(`./data/${sender}.json`, 'utf8'));
+  } catch (err) {
+    console.log(chalk.yellow(`[ WARNING ] No existing data for ${sender}. Creating new file.`));
+    return 0;
+  }
+  const totalNightWork = data['עבודת לילה'] || 0;
+  const totalPayment = data['קבלת תשלום - עבור עבודות לילה'] || 0;
+  return totalNightWork - totalPayment;
+};
