@@ -80,22 +80,6 @@ module.exports = sansekai = async (client, m, chatUpdate) => {
             "7️⃣ לילות שלא שולמו\n" +
             "נא לבחור אופציה ולשלוח את מספרה.");
       usersState[sender] = 'viewing';
-    } else if (budy === "/סכה") {
-      const totalDays = getTotal(sender, 'יום עבודה');
-      const totalNightWork = getTotal(sender, 'עבודת לילה');
-      const totalFuel = getTotal(sender, 'תדלוק סולר');
-      const totalPayment = getTotal(sender, 'קבלת תשלום - עבור עבודות לילה');
-      const unpaidNights = getUnpaidNights(sender);
-      
-      const dataMessage = 
-        `🔸 *הנתונים שלך*\n` +
-        `🗓️ ס"כה ימי עבודה: ${totalDays}\n` +
-        `🌙 ס"כה עבודת לילה: ${totalNightWork}\n` +
-        `⛽ ס"כה תדלוק סולר: ${totalFuel} ליטרים\n` +
-        `💵 תשלומים עבור עבודות לילה: ${totalPayment} ש"ח\n` +
-        `🌙 לילות שלא שולמו: ${unpaidNights}`;
-
-      reply(dataMessage);
     } else if (orders[sender] && usersState[sender] === 'ordering') {
       switch (orders[sender].step) {
         case 1:
@@ -198,85 +182,80 @@ module.exports = sansekai = async (client, m, chatUpdate) => {
     } else if (usersState[sender] === 'viewing') {
       switch (budy) {
         case "1":
-          reply(`🗓️ ס"כה ימי עבודה: ${getTotal(sender, 'יום עבודה')}`);
-          break;
-        case "2":
-          reply(`🌙 ס"כה עבודת לילה: ${getTotal(sender, 'עבודת לילה')}`);
-          break;
-        case "3":
-          reply(`🌙 ס"כה ימי עבודות לילה: ${getTotal(sender, 'עבודת לילה')}`);
-          break;
-        case "4":
-          reply(`💵 תשלומים עבור עבודות לילה: ${getTotal(sender, 'קבלת תשלום - עבור עבודות לילה')} ש"ח`);
-          break;
-        case "5":
-          reply(`💵 מפריעות שקובלו: ${getTotal(sender, 'מפריעה')} ש"ח`);
-          break;
-        case "6":
-          reply(`⛽ ס"כה תדלוק סולר: ${getTotal(sender, 'תדלוק סולר')} ליטרים`);
-          break;
-        case "7":
-          reply(`🌙 לילות שלא שולמו: ${getUnpaidNights(sender)}`);
+          reply(getStatistics(sender));
           break;
         default:
           reply("❌ נא לבחור אופציה תקפה.");
           break;
       }
+      delete usersState[sender];
     }
   } catch (err) {
-    console.log(chalk.redBright("[ ERROR ]"), err);
-    reply("❌ התרחשה שגיאה. נא לנסות שוב.");
+    console.error(err); // تحسين معالجة الأخطاء
   }
 };
 
-// Function to get total of a specific type
-const getTotal = (sender, type) => {
-  const data = fs.readFileSync(`./data/${sender}.json`, 'utf8');
-  const parsedData = JSON.parse(data);
-  return parsedData[type] || 0;
-};
+const addToTotal = (phone, type, value, date = null) => {
+  const filePath = `./data/${phone}.xlsx`;
 
-// Function to add to total of a specific type
-const addToTotal = (sender, type, value, date = null) => {
-  let data = {};
+  let workbook;
+  let worksheet;
+
   try {
-    data = JSON.parse(fs.readFileSync(`./data/${sender}.json`, 'utf8'));
+    if (fs.existsSync(filePath)) {
+      workbook = xlsx.readFile(filePath);
+      worksheet = workbook.Sheets[workbook.SheetNames[0]];
+    } else {
+      workbook = xlsx.utils.book_new();
+      worksheet = xlsx.utils.json_to_sheet([]);
+      xlsx.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+    }
+
+    const existingData = xlsx.utils.sheet_to_json(worksheet) || [];
+    const newData = { Type: type, Value: value, Date: date || new Date().toISOString() };
+    existingData.push(newData);
+
+    const newWorksheet = xlsx.utils.json_to_sheet(existingData);
+    workbook.Sheets[workbook.SheetNames[0]] = newWorksheet;
+
+    xlsx.writeFile(workbook, filePath);
   } catch (err) {
-    console.log(chalk.yellow(`[ WARNING ] No existing data for ${sender}. Creating new file.`));
+    console.error("Error writing to Excel file:", err);
   }
-  if (!data[type]) data[type] = 0;
-  data[type] += value;
-
-  if (type === 'עבודת לילה' && date) {
-    if (!data['nightWorkDates']) data['nightWorkDates'] = [];
-    data['nightWorkDates'].push(date);
-  }
-
-  fs.writeFileSync(`./data/${sender}.json`, JSON.stringify(data));
 };
 
-// Function to check if can register night work
-const canRegisterNightWork = (sender, date) => {
-  let data = {};
-  try {
-    data = JSON.parse(fs.readFileSync(`./data/${sender}.json`, 'utf8'));
-  } catch (err) {
-    console.log(chalk.yellow(`[ WARNING ] No existing data for ${sender}. Creating new file.`));
-    return true;
-  }
-  return !data['nightWorkDates'] || !data['nightWorkDates'].includes(date);
-};
+const getTotal = (phone, type) => {
+  const filePath = `./data/${phone}.xlsx`;
 
-// Function to get unpaid nights
-const getUnpaidNights = (sender) => {
-  let data = {};
-  try {
-    data = JSON.parse(fs.readFileSync(`./data/${sender}.json`, 'utf8'));
-  } catch (err) {
-    console.log(chalk.yellow(`[ WARNING ] No existing data for ${sender}. Creating new file.`));
+  if (!fs.existsSync(filePath)) {
     return 0;
   }
-  const totalNightWork = data['עבודת לילה'] || 0;
-  const totalPayment = data['קבלת תשלום - עבור עבודות לילה'] || 0;
-  return totalNightWork - totalPayment;
+
+  try {
+    const workbook = xlsx.readFile(filePath);
+    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+    const data = xlsx.utils.sheet_to_json(worksheet);
+
+    return data
+      .filter(item => item.Type === type)
+      .reduce((total, item) => total + item.Value, 0);
+  } catch (err) {
+    console.error("Error reading Excel file:", err);
+    return 0;
+  }
+};
+
+const getStatistics = (phone) => {
+  const workDays = getTotal(phone, 'יום עבודה');
+  const nightWork = getTotal(phone, 'עבודת לילה');
+  const nightWorkPayments = getTotal(phone, 'קבלת תשלום - עבור עבודות לילה');
+  const vacationDays = getTotal(phone, 'חופש');
+  const fuel = getTotal(phone, 'תדלוק סולר');
+  const bonus = getTotal(phone, 'מפריעה');
+
+  return `*ימי עבודה* ${workDays}\n` +
+         `*עבודת לילה* ${nightWork}\n` +
+         `*מפריעות* ${bonus > 0 ? bonus : "_אין_"}\n` +
+         `*תשלומים עבור עבודת לילה*\n${nightWorkPayments}\n` +
+         `חופשים: ${vacationDays}`;
 };
