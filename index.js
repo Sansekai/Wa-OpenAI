@@ -1,5 +1,5 @@
 const sessionName = "yusril";
-const donet = "https://saweria.co/sansekai";
+const donet = "*Tira* ~Devloper~ _Bimmer_";
 const {
   default: sansekaiConnect,
   useMultiFileAuthState,
@@ -129,7 +129,7 @@ async function startHisoka() {
   console.log(`using WA v${version.join(".")}, isLatest: ${isLatest}`);
   console.log(
     color(
-      figlet.textSync("Wa-OpenAI", {
+      figlet.textSync("TiRaCoOoDeR", {
         font: "Standard",
         horizontalLayout: "default",
         vertivalLayout: "default",
@@ -251,9 +251,9 @@ async function startHisoka() {
     } else if (connection === "open") {
       const botNumber = await client.decodeJid(client.user.id);
       console.log(color("Bot success conneted to server", "green"));
-      console.log(color("Donate for creator https://saweria.co/sansekai", "yellow"));
+      console.log(color("TiRaCoDeR", "yellow"));
       console.log(color("Type /menu to see menu"));
-      client.sendMessage(botNumber, { text: `Bot started!\n\njangan lupa support ya bang :)\n${donet}` });
+      client.sendMessage(botNumber, { text: `✅ *בוט רישום עבודה מופעל✅*\n\n${donet}` });
     }
     // console.log('Connected...', update)
   });
