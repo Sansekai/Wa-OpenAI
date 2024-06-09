@@ -5,10 +5,10 @@ const chalk = require("chalk");
 const axios = require("axios");
 const OpenAI = require("openai");
 let setting = require("./key.json");
-const openai = new OpenAI({ apiKey: setting.keyopenai });
 const xlsx = require("xlsx");
 let orders = {};
 let usersState = {};
+let userActivities = {};
 
 const calculateCost = (type, value) => {
   switch (type) {
@@ -17,6 +17,116 @@ const calculateCost = (type, value) => {
     default:
       return 0;
   }
+};
+
+const canRegisterWorkDay = (sender, date) => {
+  // Add your logic here to check if the work day can be registered for the given sender and date
+  return true; // Placeholder return value, replace with your logic
+};
+
+const canRegisterNightWork = (sender, date) => {
+  // Add your logic here to check if the night work can be registered for the given sender and date
+  return true; // Placeholder return value, replace with your logic
+};
+
+const addToTotal = (phone, type, value, date = null) => {
+  const filePath = `./${phone}.xlsx`;
+
+  let workbook;
+  let worksheet;
+
+  try {
+    if (fs.existsSync(filePath)) {
+      workbook = xlsx.readFile(filePath);
+      worksheet = workbook.Sheets[workbook.SheetNames[0]];
+    } else {
+      workbook = xlsx.utils.book_new();
+      worksheet = xlsx.utils.json_to_sheet([]);
+      xlsx.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+    }
+
+    const existingData = xlsx.utils.sheet_to_json(worksheet) || [];
+    const newDate = date || new Date().toISOString().split('T')[0];
+
+    // تحقق من وجود مدخلة بنفس التاريخ والنوع
+    const existingEntry = existingData.find(entry => entry.Type === type && entry.Date.split('T')[0] === newDate);
+    if (existingEntry) {
+      return { success: false, message: `${type} \n${newDate} ~אתה כבר רשום~` };
+    }
+
+    const newData = { Type: type, Value: value, Date: newDate };
+    existingData.push(newData);
+
+    const newWorksheet = xlsx.utils.json_to_sheet(existingData);
+    workbook.Sheets[workbook.SheetNames[0]] = newWorksheet;
+
+    xlsx.writeFile(workbook, filePath);
+    return { success: true, message: `${type} \n${newDate} נרשמת בהצלחה` };
+  } catch (err) {
+    console.error("Error writing to Excel file:", err);
+    return { success: false, message: "⚠️ *אירעה שגיאה*" };
+  }
+};
+
+const getTotal = (phone, type) => {
+  const filePath = `./${phone}.xlsx`;
+
+  if (!fs.existsSync(filePath)) {
+    console.log(`File not found for phone: ${phone}`);
+    return 0;
+  }
+
+  try {
+    const workbook = xlsx.readFile(filePath);
+    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+    const data = xlsx.utils.sheet_to_json(worksheet);
+
+    const total = data
+      .filter(item => item.Type === type)
+      .reduce((total, item) => total + item.Value, 0);
+
+    console.log(`Total for type ${type} for phone ${phone}: ${total}`);
+    return total;
+  } catch (err) {
+    console.error("Error reading Excel file:", err);
+    return 0;
+  }
+};
+
+const getStatistics = (phone) => {
+  const workDays = getTotal(phone, 'יום עבודה');
+  const nightWork = getTotal(phone, 'עבודת לילה');
+  const nightWorkPayments = getTotal(phone, 'קבלת תשלום - עבור עבודות לילה');
+  const vacationDays = getTotal(phone, 'חופש');
+  const fuel = getTotal(phone, 'תדלוק סולר');
+  const bonus = getTotal(phone, 'מפריעה');
+
+  return `*ימי עבודה:* ${workDays}\n` +
+         `*עבודת לילה:* ${nightWork}\n` +
+         `*מפריעות:* ${bonus > 0 ? bonus : "_אין_"}\n` +
+         `*תשלומים עבור עבודת לילה:* ${nightWorkPayments}\n` +
+         `*חופשים:* ${vacationDays}\n` +
+         `*תדלוק סולר:* ${fuel}`;
+};
+
+const registerActivity = (sender, type, date) => {
+  if (!userActivities[sender]) {
+    userActivities[sender] = [];
+  }
+  userActivities[sender].push({ type, date });
+};
+
+const formatActivities = (activities) => {
+  let formatted = "";
+  activities.forEach((activity, index) => {
+    formatted += `${index + 1}. ${activity.type}: ${activity.date}\n`;
+  });
+  return formatted;
+};
+
+const getActivities = (sender) => {
+  const activities = userActivities[sender] || [];
+  return formatActivities(activities);
 };
 
 module.exports = sansekai = async (client, m, chatUpdate) => {
@@ -48,7 +158,7 @@ module.exports = sansekai = async (client, m, chatUpdate) => {
 
     console.log(chalk.black(chalk.bgWhite("[ LOGS ]")), color(argsLog, "turquoise"), chalk.magenta("From"), chalk.green(m.pushName || "No Name"), chalk.yellow(`[ ${m.sender.replace("@s.whatsapp.net", "")} ]`));
 
-    if (budy === "/רישום" || budy === "/יומן") {
+    if (budy === "//!" || budy === "*&") {
       reply("🔹 *רישום עבודה*\n" +
             "1️⃣ יום עבודה/חופש\n" +
             "2️⃣ עבודת לילה\n" +
@@ -57,15 +167,13 @@ module.exports = sansekai = async (client, m, chatUpdate) => {
             "נא לבחור אופציה ולשלוח את מספרה.");
       orders[sender] = { step: 1, items: [] };
       usersState[sender] = 'ordering';
-    } else if (budy === "/רישום שלי") {
+    } else if (budy === "!@!") {
       reply("🔸 *הרישום שלי*\n" +
             "1️⃣ ס\"כה ימי עבודה\n" +
             "2️⃣ ס\"כה עבודת לילה\n" +
-            "3️⃣ סכ\"ה ימי עבודות לילה\n" +
-            "4️⃣ תשלומים עבור עבודות לילה\n" +
-            "5️⃣ מפריעות שקובלו\n" +
-            "6️⃣ ס\"כה תדלוק סולר\n" +
-            "7️⃣ לילות שלא שולמו\n" +
+            "3️⃣ תשלומים עבור עבודות לילה\n" +
+            "4️⃣ מפריעות שקובלו\n" +
+           " 5️⃣ ס\"כה תדלוק סולר\n" +
             "נא לבחור אופציה ולשלוח את מספרה.");
       usersState[sender] = 'viewing';
     } else if (orders[sender] && usersState[sender] === 'ordering') {
@@ -79,14 +187,14 @@ module.exports = sansekai = async (client, m, chatUpdate) => {
             case "2":
               const today = new Date();
               const dateStr = today.toISOString().split('T')[0];
-              if (!canRegisterNightWork(sender, dateStr)) {
-                reply("❌ כבר נרשמה עבודת לילה עבור היום.");
+              const nightWorkResult = addToTotal(sender, 'עבודת לילה', 1, dateStr);
+              if (!nightWorkResult.success) {
+                reply(`❌ ${nightWorkResult.message}`);
                 delete orders[sender];
                 delete usersState[sender];
                 break;
               }
-              reply("🌙 עבודת לילה נרשמה בהצלחה.");
-              addToTotal(sender, 'עבודת לילה', 1, dateStr);
+              reply(`🌙 ${nightWorkResult.message}`);
               reply(`עלות: ${calculateCost('עבודת לילה', 1)} ש"ח`);
               delete orders[sender];
               delete usersState[sender];
@@ -99,151 +207,112 @@ module.exports = sansekai = async (client, m, chatUpdate) => {
               reply("💵 קבלת תשלום\n1️⃣ מפריעה\n2️⃣ עבור עבודות לילה\nנא לבחור אופציה ולשלוח את מספרה.");
               orders[sender].step = 4;
               break;
-            default:
-              reply("❌ נא לבחור אופציה תקפה.");
-              break;
           }
           break;
         case 1.1:
+          const today = new Date();
+          const dateStr = today.toISOString().split('T')[0];
           if (budy === "1") {
-            const today = new Date();
-            if (today.getDay() === 6) {
-              reply("❌ לא ניתן לרשום יום עבודה בשבת.");
+            const workDayResult = addToTotal(sender, 'יום עבודה', 1, dateStr);
+            if (!workDayResult.success) {
+              reply(`❌ ${workDayResult.message}`);
               delete orders[sender];
               delete usersState[sender];
               break;
             }
-            const dateStr = today.toISOString().split('T')[0];
-            if (!canRegisterWorkDay(sender, dateStr)) {
-              reply("❌ כבר נרשם יום עבודה עבור היום.");
-              delete orders[sender];
-              delete usersState[sender];
-              break;
-            }
-            reply("✅ יום עבודה נרשם בהצלחה המשך יום נעים.");
-            addToTotal(sender, 'יום עבודה', 1, dateStr);
+            reply(`🗓️ ${workDayResult.message}`);
+            reply(`עלות: ${calculateCost('יום עבודה', 1)} ש"ח`);
           } else if (budy === "2") {
-            reply("✅ נרשם בהצלחה חופשה נעימה.");
-            addToTotal(sender, 'חופש', 1);
-          } else {
-            reply("❌ נא לבחור אופציה תקפה.");
+            const vacationResult = addToTotal(sender, 'חופש', 1, dateStr);
+            if (!vacationResult.success) {
+              reply(`❌ ${vacationResult.message}`);
+              delete orders[sender];
+              delete usersState[sender];
+              break;
+            }
+            reply(`🛌 ${vacationResult.message}`);
+            reply(`עלות: ${calculateCost('חופש', 1)} ש"ח`);
           }
           delete orders[sender];
           delete usersState[sender];
           break;
         case 3:
-          const quantity = parseFloat(budy);
-          if (isNaN(quantity) || quantity <= 0) {
-            reply("❌ נא להכניס כמות ליטרים תקפה.");
-          } else {
-            reply("✅ נרשמם בהצלחה!");
-            addToTotal(sender, 'תדלוק סולר', quantity);
-            delete orders[sender];
-            delete usersState[sender];
+          const fuelLiters = parseFloat(budy);
+          if (isNaN(fuelLiters)) {
+            reply("⛽ כמות ליטרים לא תקינה. נא להכניס מספר תקין.");
+            break;
           }
+          const fuelResult = addToTotal(sender, 'תדלוק סולר', fuelLiters);
+          reply(`⛽ ${fuelResult.message}`);
+          reply(`עלות: ${calculateCost('תדלוק סולר', fuelLiters)} ש"ח`);
+          delete orders[sender];
+          delete usersState[sender];
           break;
         case 4:
-          if (budy === "1") {
-            reply("💵 הכנס סכום מפריעה.");
-            orders[sender].step = 4.1;
-          } else if (budy === "2") {
-            reply("💵 הכנס סכום שקבלת עבור עבודת לילה.");
-            orders[sender].step = 4.2;
-          } else {
-            reply("❌ נא לבחור אופציה תקפה.");
+          switch (budy) {
+            case "1":
+              reply("💵 הכנס סכום קבלת מפריעה.");
+              orders[sender].step = 4.1;
+              break;
+            case "2":
+              reply("💵 הכנס סכום קבלת תשלום עבור עבודות לילה.");
+              orders[sender].step = 4.2;
+              break;
           }
           break;
         case 4.1:
-        case 4.2:
-          const amount = parseFloat(budy);
-          if (isNaN(amount) || amount <= 0) {
-            reply("❌ נא להכניס סכום תקף.");
-          } else {
-            reply("✅ התשלום נרשם בהצלחה.");
-            const type = orders[sender].step === 4.1 ? 'מפריעה' : 'קבלת תשלום - עבור עבודות לילה';
-            addToTotal(sender, type, amount);
-            delete orders[sender];
-            delete usersState[sender];
+          const bonusAmount = parseFloat(budy);
+          if (isNaN(bonusAmount)) {
+            reply("💵 סכום לא תקין. נא להכניס מספר תקין.");
+            break;
           }
+          const bonusResult = addToTotal(sender, 'מפריעה', bonusAmount);
+          reply(`💵 ${bonusResult.message}`);
+          delete orders[sender];
+          delete usersState[sender];
+          break;
+        case 4.2:
+          const nightWorkPaymentAmount = parseFloat(budy);
+          if (isNaN(nightWorkPaymentAmount)) {
+            reply("💵 סכום לא תקין. נא להכניס מספר תקין.");
+            break;
+          }
+          const nightWorkPaymentResult = addToTotal(sender, 'קבלת תשלום - עבור עבודות לילה', nightWorkPaymentAmount);
+          reply(`💵 ${nightWorkPaymentResult.message}`);
+          delete orders[sender];
+          delete usersState[sender];
           break;
       }
     } else if (usersState[sender] === 'viewing') {
       switch (budy) {
         case "1":
-          reply(getStatistics(sender));
+          reply(`סה"כ ימי עבודה: ${getTotal(sender, 'יום עבודה')}`);
           break;
-        default:
-          reply("❌ נא לבחור אופציה תקפה.");
+        case "2":
+          reply(`סה"כ עבודות לילה: ${getTotal(sender, 'עבודת לילה')}`);
+          break;
+        case "3":
+          reply(`סה"כ תשלומים עבור עבודות לילה: ${getTotal(sender, 'קבלת תשלום - עבור עבודות לילה')}`);
+          break;
+        case "4":
+          reply(`סה"כ מפריעות שקובלו: ${getTotal(sender, 'מפריעה')}`);
+          break;
+        case "5":
+          reply(`סה"כ תדלוק סולר: ${getTotal(sender, 'תדלוק סולר')}`);
           break;
       }
       delete usersState[sender];
     }
   } catch (err) {
-    console.error(err); // تحسين معالجة الأخطاء
+    console.error(err);
+    reply(`⚠️ אירעה שגיאה: ${err.message}`);
   }
 };
 
-const addToTotal = (phone, type, value, date = null) => {
-  const filePath = `./data/${phone}.xlsx`;
-
-  let workbook;
-  let worksheet;
-
-  try {
-    if (fs.existsSync(filePath)) {
-      workbook = xlsx.readFile(filePath);
-      worksheet = workbook.Sheets[workbook.SheetNames[0]];
-    } else {
-      workbook = xlsx.utils.book_new();
-      worksheet = xlsx.utils.json_to_sheet([]);
-      xlsx.utils.book_append_sheet(workbook, worksheet, "Sheet1");
-    }
-
-    const existingData = xlsx.utils.sheet_to_json(worksheet) || [];
-    const newData = { Type: type, Value: value, Date: date || new Date().toISOString() };
-    existingData.push(newData);
-
-    const newWorksheet = xlsx.utils.json_to_sheet(existingData);
-    workbook.Sheets[workbook.SheetNames[0]] = newWorksheet;
-
-    xlsx.writeFile(workbook, filePath);
-  } catch (err) {
-    console.error("Error writing to Excel file:", err);
-  }
+const isNumber = (text) => {
+  return !isNaN(text);
 };
 
-const getTotal = (phone, type) => {
-  const filePath = `./data/${phone}.xlsx`;
-
-  if (!fs.existsSync(filePath)) {
-    return 0;
-  }
-
-  try {
-    const workbook = xlsx.readFile(filePath);
-    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-    const data = xlsx.utils.sheet_to_json(worksheet);
-
-    return data
-      .filter(item => item.Type === type)
-      .reduce((total, item) => total + item.Value, 0);
-  } catch (err) {
-    console.error("Error reading Excel file:", err);
-    return 0;
-  }
-};
-
-const getStatistics = (phone) => {
-  const workDays = getTotal(phone, 'יום עבודה');
-  const nightWork = getTotal(phone, 'עבודת לילה');
-  const nightWorkPayments = getTotal(phone, 'קבלת תשלום - עבור עבודות לילה');
-  const vacationDays = getTotal(phone, 'חופש');
-  const fuel = getTotal(phone, 'תדלוק סולר');
-  const bonus = getTotal(phone, 'מפריעה');
-
-  return `*ימי עבודה* ${workDays}\n` +
-         `*עבודת לילה* ${nightWork}\n` +
-         `*מפריעות* ${bonus > 0 ? bonus : "_אין_"}\n` +
-         `*תשלומים עבור עבודת לילה*\n${nightWorkPayments}\n` +
-         `חופשים: ${vacationDays}`;
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat('he-IL', { style: 'currency', currency: 'ILS' }).format(amount);
 };
