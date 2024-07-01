@@ -1,0 +1,44 @@
+version: 2.1
+
+executors:
+  node-executor:
+    docker:
+      - image: circleci/node:14
+    working_directory: ~/app
+
+jobs:
+  build:
+    executor: node-executor
+    steps:
+      - checkout
+
+      - run:
+          name: Install Docker
+          command: |
+            curl -fsSL https://get.docker.com -o get-docker.sh
+            sh get-docker.sh
+
+      - setup_remote_docker:
+          version: 20.10.7
+
+      - run:
+          name: Build Docker image
+          command: docker build -t my-node-app .
+
+      - run:
+          name: Run npm install
+          command: docker run my-node-app npm install
+
+      - run:
+          name: Run tests
+          command: docker run my-node-app npm test
+
+      - run:
+          name: Start application
+          command: docker run -d -p 3000:3000 my-node-app
+
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - build
