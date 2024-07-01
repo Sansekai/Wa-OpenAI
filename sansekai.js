@@ -2,11 +2,11 @@ const { BufferJSON, WA_DEFAULT_EPHEMERAL, generateWAMessageFromContent, proto, g
 const fs = require("fs");
 const util = require("util");
 const chalk = require("chalk");
-const OpenAI = require("openai");
+const { G4F } = require("g4f");
+const g4f = new G4F();
 let setting = require("./key.json");
-const openai = new OpenAI({ apiKey: setting.keyopenai });
 
-module.exports = sansekai = async (client, m, chatUpdate) => {
+module.exports = COder = async (client, m, chatUpdate) => {
   try {
     var body = m.mtype === "conversation" ? m.message.conversation :
            m.mtype == "imageMessage" ? m.message.imageMessage.caption :
@@ -20,7 +20,6 @@ module.exports = sansekai = async (client, m, chatUpdate) => {
            "";
     if (m.mtype === "viewOnceMessageV2") return
     var budy = typeof m.text == "string" ? m.text : "";
-    // var prefix = /^[\\/!#.]/gi.test(body) ? body.match(/^[\\/!#.]/gi) : "/"
     var prefix = /^[\\/!#.]/gi.test(body) ? body.match(/^[\\/!#.]/gi) : "/";
     const isCmd2 = body.startsWith(prefix);
     const command = body.replace(prefix, "").trim().split(/ +/).shift().toLowerCase();
@@ -64,79 +63,49 @@ module.exports = sansekai = async (client, m, chatUpdate) => {
 
     if (isCmd2) {
       switch (command) {
-        case "help": case "menu": case "start": case "info":
-          m.reply(`*Whatsapp Bot OpenAI*
-            
-*(ChatGPT)*
-Cmd: ${prefix}ai 
-Tanyakan apa saja kepada AI. 
-
-*(DALL-E)*
-Cmd: ${prefix}img
-Membuat gambar dari teks
-
-*(Source Code Bot)*
-Cmd: ${prefix}sc
-Menampilkan source code bot yang dipakai`)
-          break;
-        case "ai": case "openai": case "chatgpt": case "ask":
+        
+        case "ai": case "gpt": case "*": case "ask":
           try {
-            // tidak perlu diisi apikeynya disini, karena sudah diisi di file key.json
-            if (setting.keyopenai === "ISI_APIKEY_OPENAI_DISINI") return reply("Apikey belum diisi\n\nSilahkan isi terlebih dahulu apikeynya di file key.json\n\nApikeynya bisa dibuat di website: https://beta.openai.com/account/api-keys");
-            if (!text) return reply(`Chat dengan AI.\n\nContoh:\n${prefix}${command} Apa itu resesi`);
-            const chatCompletion = await openai.chat.completions.create({
-              messages: [{ role: 'user', content: q }],
-              model: 'gpt-3.5-turbo'
-            });
+            if (!text) return reply(`✌️\n\n Tira Ai coder \n\n ~|t|i|r|a|☆|A|~`);
+
+            const messages = [
+                { role: "system", content: "you are name is Tira Ai."},
+                { role: "user", content: q },
+            ];
+            const options = {
+                model: "gpt-4",
+                debug: false,
+                retry: {
+                    times: 1,
+                    condition: (text) => {
+                        const words = text.split("•••••• ");
+                        return words.length > 10;
+                    }
+                },
+                output: (text) => {
+                    return text + " \n\n ~Tira Coder~";
+                }
+            };
+
+            const chatCompletion = await g4f.chatCompletion(messages, options);
           
-            await m.reply(chatCompletion.choices[0].message.content);
+            await m.reply(chatCompletion);
           } catch (error) {
-          if (error.response) {
-            console.log(error.response.status);
-            console.log(error.response.data);
-          } else {
             console.log(error);
-            m.reply("Maaf, sepertinya ada yang error :"+ error.message);
+            m.reply("Maaf, sepertinya ada yang error :" + error.message);
           }
-        }
           break;
-        case "img": case "ai-img": case "image": case "images": case "dall-e": case "dalle":
-          try {
-            // tidak perlu diisi apikeynya disini, karena sudah diisi di file key.json
-            if (setting.keyopenai === "ISI_APIKEY_OPENAI_DISINI") return reply("Apikey belum diisi\n\nSilahkan isi terlebih dahulu apikeynya di file key.json\n\nApikeynya bisa dibuat di website: https://beta.openai.com/account/api-keys");
-            if (!text) return reply(`Membuat gambar dari AI.\n\nContoh:\n${prefix}${command} Wooden house on snow mountain`);
-            const image = await openai.images.generate({ 
-              model: "dall-e-3",
-              prompt: q, 
-              n: 1,
-              size: '1024x1024' 
-              });
-            //console.log(response.data.data[0].url) // see the response
-            client.sendImage(from, image.data[0].url, text, mek);
-            } catch (error) {
-          if (error.response) {
-            console.log(error.response.status);
-            console.log(error.response.data);
-            console.log(`${error.response.status}\n\n${error.response.data}`);
-          } else {
-            console.log(error);
-            m.reply("Maaf, sepertinya ada yang error :"+ error.message);
-          }
-        }
+        case "sc": case "script": case "scbot":
+          m.reply("Tira Bot start..✅️");
           break;
-          case "sc": case "script": case "scbot":
-           m.reply("Bot ini menggunakan script dari https://github.com/Sansekai/Wa-OpenAI");
-          break
         default: {
           if (isCmd2 && budy.toLowerCase() != undefined) {
             if (m.chat.endsWith("broadcast")) return;
             if (m.isBaileys) return;
             if (!budy.toLowerCase()) return;
             if (argsLog || (isCmd2 && !m.isGroup)) {
-              // client.sendReadReceipt(m.chat, m.sender, [m.key.id])
               console.log(chalk.black(chalk.bgRed("[ ERROR ]")), color("command", "turquoise"), color(`${prefix}${command}`, "turquoise"), color("tidak tersedia", "turquoise"));
             } else if (argsLog || (isCmd2 && m.isGroup)) {
-              // client.sendReadReceipt(m.chat, m.sender, [m.key.id])
               console.log(chalk.black(chalk.bgRed("[ ERROR ]")), color("command", "turquoise"), color(`${prefix}${command}`, "turquoise"), color("tidak tersedia", "turquoise"));
             }
           }
@@ -155,3 +124,4 @@ fs.watchFile(file, () => {
   delete require.cache[file];
   require(file);
 });
+
