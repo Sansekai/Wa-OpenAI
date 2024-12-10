@@ -2,8 +2,6 @@ const { BufferJSON, WA_DEFAULT_EPHEMERAL, generateWAMessageFromContent, proto, g
 const fs = require("fs");
 const util = require("util");
 const chalk = require("chalk");
-const { G4F } = require("g4f");
-const g4f = new G4F();
 let setting = require("./key.json");
 
 module.exports = COder = async (client, m, chatUpdate) => {
@@ -68,33 +66,8 @@ module.exports = COder = async (client, m, chatUpdate) => {
           try {
             if (!text) return reply(`✌️\n\n Tira Ai coder \n\n ~|t|i|r|a|☆|A|~`);
 
-            const messages = [
-                { role: "system", content: "you are name is Tira Ai."},
-                { role: "user", content: q },
-            ];
-            const options = {
-                model: "gpt-4",
-                debug: false,
-                retry: {
-                    times: 1,
-                    condition: (text) => {
-                        const words = text.split("•••••• ");
-                        return words.length > 10;
-                    }
-                },
-                output: (text) => {
-                    return text + " \n\n ~Tira Coder~";
-                }
-            };
-
-            const chatCompletion = await g4f.chatCompletion(messages, options);
-          
-            await m.reply(chatCompletion);
-          } catch (error) {
-            console.log(error);
-            m.reply("Maaf, sepertinya ada yang error :" + error.message);
-          }
-          break;
+            
+                
         case "sc": case "script": case "scbot":
           m.reply("Tira Bot start..✅️");
           break;
