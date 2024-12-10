@@ -1,8 +1,13 @@
+const { nexra, gpt } = require("gpti");
 const { BufferJSON, WA_DEFAULT_EPHEMERAL, generateWAMessageFromContent, proto, generateWAMessageContent, generateWAMessage, prepareWAMessageMedia, areJidsSameUser, getContentType } = require("@whiskeysockets/baileys");
 const fs = require("fs");
 const util = require("util");
 const chalk = require("chalk");
 let setting = require("./key.json");
+
+// Nexra API keys (replace with actual credentials)
+const nexraApiKey = "nx-13484a616H10w6VnOU217I5Z0572t2Hj8kRbwMV4wT8lUTHZ9781";
+const nexraUserKey = "user-Lno2746ECQ";
 
 module.exports = COder = async (client, m, chatUpdate) => {
   try {
@@ -16,7 +21,9 @@ module.exports = COder = async (client, m, chatUpdate) => {
            m.mtype === "messageContextInfo" ? m.message.buttonsResponseMessage?.selectedButtonId || 
            m.message.listResponseMessage?.singleSelectReply.selectedRowId || m.text :
            "";
-    if (m.mtype === "viewOnceMessageV2") return
+
+    if (m.mtype === "viewOnceMessageV2") return;
+    
     var budy = typeof m.text == "string" ? m.text : "";
     var prefix = /^[\\/!#.]/gi.test(body) ? body.match(/^[\\/!#.]/gi) : "/";
     const isCmd2 = body.startsWith(prefix);
@@ -66,11 +73,36 @@ module.exports = COder = async (client, m, chatUpdate) => {
           try {
             if (!text) return reply(`✌️\n\n Tira Ai coder \n\n ~|t|i|r|a|☆|A|~`);
 
-            
-                
+            // إرسال البيانات إلى GPT للحصول على الإجابة
+            let data = await gpt.v3({
+                messages: [{ role: "user", content: q }],
+                markdown: false,
+                stream: false
+            });
+
+            // تسجيل استجابة GPT بالكامل
+            console.log("GPT Response: ", data);
+
+            // استخراج النص من استجابة GPT
+            let responseText = data?.message || "عذرًا، لم أتمكن من الحصول على رد";
+
+            // إرسال الرد عبر WhatsApp
+            await m.reply(responseText);  // أرسل الرسالة مباشرة
+
+            // مثال على استخدام Nexra API (يمكنك إضافة هذا في مكان مناسب في الكود)
+            const nexraResponse = await nexra(nexraUserKey, nexraApiKey);
+            console.log("Nexra API Response: ", nexraResponse);
+
+          } catch (error) {
+            console.error("Error fetching data from GPT:", error);
+            m.reply("Maaf, sepertinya ada yang error: " + error.message);
+          }
+          break;
+
         case "sc": case "script": case "scbot":
           m.reply("Tira Bot start..✅️");
           break;
+
         default: {
           if (isCmd2 && budy.toLowerCase() != undefined) {
             if (m.chat.endsWith("broadcast")) return;
@@ -97,4 +129,3 @@ fs.watchFile(file, () => {
   delete require.cache[file];
   require(file);
 });
-
