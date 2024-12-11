@@ -31,6 +31,7 @@
     "figlet": "^1.5.2",
     "fs": "0.0.1-security",
     "lodash": "^4.17.21",
+    "moment-timezone": "^0.5.46",
     "openai": "^4.20.1",
     "pino": "^7.0.5",
     "qrcode-terminal": "^0.12.0",

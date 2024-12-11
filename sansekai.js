@@ -6,66 +6,51 @@ const OpenAI = require("openai");
 let setting = require("./key.json");
 const openai = new OpenAI({ apiKey: setting.keyopenai });
 
-module.exports = sansekai = async (client, m, chatUpdate) => {
+module.exports = sansekai = async (upsert, sock, store, message) => {
   try {
-    var body = m.mtype === "conversation" ? m.message.conversation :
-           m.mtype == "imageMessage" ? m.message.imageMessage.caption :
-           m.mtype == "videoMessage" ? m.message.videoMessage.caption :
-           m.mtype == "extendedTextMessage" ? m.message.extendedTextMessage.text :
-           m.mtype == "buttonsResponseMessage" ? m.message.buttonsResponseMessage.selectedButtonId :
-           m.mtype == "listResponseMessage" ? m.message.listResponseMessage.singleSelectReply.selectedRowId :
-           m.mtype == "templateButtonReplyMessage" ? m.message.templateButtonReplyMessage.selectedId :
-           m.mtype === "messageContextInfo" ? m.message.buttonsResponseMessage?.selectedButtonId || 
-           m.message.listResponseMessage?.singleSelectReply.selectedRowId || m.text :
-           "";
-    if (m.mtype === "viewOnceMessageV2") return
-    var budy = typeof m.text == "string" ? m.text : "";
+    let budy = (typeof message.text == 'string' ? message.text : '')
     // var prefix = /^[\\/!#.]/gi.test(body) ? body.match(/^[\\/!#.]/gi) : "/"
-    var prefix = /^[\\/!#.]/gi.test(body) ? body.match(/^[\\/!#.]/gi) : "/";
-    const isCmd2 = body.startsWith(prefix);
-    const command = body.replace(prefix, "").trim().split(/ +/).shift().toLowerCase();
-    const args = body.trim().split(/ +/).slice(1);
-    const pushname = m.pushName || "No Name";
-    const botNumber = await client.decodeJid(client.user.id);
-    const itsMe = m.sender == botNumber ? true : false;
+    var prefix = /^[\\/!#.]/gi.test(budy) ? budy.match(/^[\\/!#.]/gi) : "/";
+    const isCmd = budy.startsWith(prefix);
+    const command = budy.replace(prefix, "").trim().split(/ +/).shift().toLowerCase();
+    const args = budy.trim().split(/ +/).slice(1);
+    const pushname = message.pushName || "No Name";
+    const botNumber = sock.user.id;
+    const itsMe = message.sender == botNumber ? true : false;
     let text = (q = args.join(" "));
     const arg = budy.trim().substring(budy.indexOf(" ") + 1);
     const arg1 = arg.trim().substring(arg.indexOf(" ") + 1);
-
-    const from = m.chat;
-    const reply = m.reply;
-    const sender = m.sender;
-    const mek = chatUpdate.messages[0];
+    const from = message.chat;
 
     const color = (text, color) => {
       return !color ? chalk.green(text) : chalk.keyword(color)(text);
     };
 
     // Group
-    const groupMetadata = m.isGroup ? await client.groupMetadata(m.chat).catch((e) => {}) : "";
-    const groupName = m.isGroup ? groupMetadata.subject : "";
+    const groupMetadata = message.isGroup ? await sock.groupMetadata(message.chat).catch((e) => {}) : "";
+    const groupName = message.isGroup ? groupMetadata.subject : "";
 
     // Push Message To Console
     let argsLog = budy.length > 30 ? `${q.substring(0, 30)}...` : budy;
 
-    if (isCmd2 && !m.isGroup) {
-      console.log(chalk.black(chalk.bgWhite("[ LOGS ]")), color(argsLog, "turquoise"), chalk.magenta("From"), chalk.green(pushname), chalk.yellow(`[ ${m.sender.replace("@s.whatsapp.net", "")} ]`));
-    } else if (isCmd2 && m.isGroup) {
+    if (isCmd && !message.isGroup) {
+      console.log(chalk.black(chalk.bgWhite("[ LOGS ]")), color(argsLog, "turquoise"), chalk.magenta("From"), chalk.green(pushname), chalk.yellow(`[ ${message.sender.replace("@s.whatsapp.net", "")} ]`));
+    } else if (isCmd && message.isGroup) {
       console.log(
         chalk.black(chalk.bgWhite("[ LOGS ]")),
         color(argsLog, "turquoise"),
         chalk.magenta("From"),
         chalk.green(pushname),
-        chalk.yellow(`[ ${m.sender.replace("@s.whatsapp.net", "")} ]`),
+        chalk.yellow(`[ ${message.sender.replace("@s.whatsapp.net", "")} ]`),
         chalk.blueBright("IN"),
         chalk.green(groupName)
       );
     }
 
-    if (isCmd2) {
+    if (isCmd) {
       switch (command) {
         case "help": case "menu": case "start": case "info":
-          m.reply(`*Whatsapp Bot OpenAI*
+          message.reply(`*Whatsapp Bot OpenAI*
             
 *(ChatGPT)*
 Cmd: ${prefix}ai 
@@ -82,29 +67,29 @@ Menampilkan source code bot yang dipakai`)
         case "ai": case "openai": case "chatgpt": case "ask":
           try {
             // tidak perlu diisi apikeynya disini, karena sudah diisi di file key.json
-            if (setting.keyopenai === "ISI_APIKEY_OPENAI_DISINI") return reply("Apikey belum diisi\n\nSilahkan isi terlebih dahulu apikeynya di file key.json\n\nApikeynya bisa dibuat di website: https://beta.openai.com/account/api-keys");
-            if (!text) return reply(`Chat dengan AI.\n\nContoh:\n${prefix}${command} Apa itu resesi`);
+            if (setting.keyopenai === "ISI_APIKEY_OPENAI_DISINI") return message.reply("Apikey belum diisi\n\nSilahkan isi terlebih dahulu apikeynya di file key.json\n\nApikeynya bisa dibuat di website: https://beta.openai.com/account/api-keys");
+            if (!text) return message.reply(`Chat dengan AI.\n\nContoh:\n${prefix}${command} Apa itu resesi`);
             const chatCompletion = await openai.chat.completions.create({
               messages: [{ role: 'user', content: q }],
               model: 'gpt-3.5-turbo'
             });
           
-            await m.reply(chatCompletion.choices[0].message.content);
+            await message.reply(chatCompletion.choices[0].message.content);
           } catch (error) {
           if (error.response) {
             console.log(error.response.status);
             console.log(error.response.data);
           } else {
             console.log(error);
-            m.reply("Maaf, sepertinya ada yang error :"+ error.message);
+            message.reply("Maaf, sepertinya ada yang error :"+ error.message);
           }
         }
           break;
         case "img": case "ai-img": case "image": case "images": case "dall-e": case "dalle":
           try {
             // tidak perlu diisi apikeynya disini, karena sudah diisi di file key.json
-            if (setting.keyopenai === "ISI_APIKEY_OPENAI_DISINI") return reply("Apikey belum diisi\n\nSilahkan isi terlebih dahulu apikeynya di file key.json\n\nApikeynya bisa dibuat di website: https://beta.openai.com/account/api-keys");
-            if (!text) return reply(`Membuat gambar dari AI.\n\nContoh:\n${prefix}${command} Wooden house on snow mountain`);
+            if (setting.keyopenai === "ISI_APIKEY_OPENAI_DISINI") return message.reply("Apikey belum diisi\n\nSilahkan isi terlebih dahulu apikeynya di file key.json\n\nApikeynya bisa dibuat di website: https://beta.openai.com/account/api-keys");
+            if (!text) return message.reply(`Membuat gambar dari AI.\n\nContoh:\n${prefix}${command} Wooden house on snow mountain`);
             const image = await openai.images.generate({ 
               model: "dall-e-3",
               prompt: q, 
@@ -112,7 +97,9 @@ Menampilkan source code bot yang dipakai`)
               size: '1024x1024' 
               });
             //console.log(response.data.data[0].url) // see the response
-            client.sendImage(from, image.data[0].url, text, mek);
+            sock.sendMessage(from, 
+              { image: { url: image.data[0].url }, caption: "DALE-E" },
+              { quoted: message, ephemeralExpiration: message.contextInfo.expiration });
             } catch (error) {
           if (error.response) {
             console.log(error.response.status);
@@ -120,23 +107,23 @@ Menampilkan source code bot yang dipakai`)
             console.log(`${error.response.status}\n\n${error.response.data}`);
           } else {
             console.log(error);
-            m.reply("Maaf, sepertinya ada yang error :"+ error.message);
+            message.reply("Maaf, sepertinya ada yang error :"+ error.message);
           }
         }
           break;
           case "sc": case "script": case "scbot":
-           m.reply("Bot ini menggunakan script dari https://github.com/Sansekai/Wa-OpenAI");
+           message.reply("Bot ini menggunakan script dari https://github.com/Sansekai/Wa-OpenAI");
           break
         default: {
-          if (isCmd2 && budy.toLowerCase() != undefined) {
-            if (m.chat.endsWith("broadcast")) return;
-            if (m.isBaileys) return;
+          if (isCmd && budy.toLowerCase() != undefined) {
+            if (message.chat.endsWith("broadcast")) return;
+            if (message.isBaileys) return;
             if (!budy.toLowerCase()) return;
-            if (argsLog || (isCmd2 && !m.isGroup)) {
-              // client.sendReadReceipt(m.chat, m.sender, [m.key.id])
+            if (argsLog || (isCmd && !message.isGroup)) {
+              // sock.sendReadReceipt(message.chat, message.sender, [message.key.id])
               console.log(chalk.black(chalk.bgRed("[ ERROR ]")), color("command", "turquoise"), color(`${prefix}${command}`, "turquoise"), color("tidak tersedia", "turquoise"));
-            } else if (argsLog || (isCmd2 && m.isGroup)) {
-              // client.sendReadReceipt(m.chat, m.sender, [m.key.id])
+            } else if (argsLog || (isCmd && message.isGroup)) {
+              // sock.sendReadReceipt(message.chat, message.sender, [message.key.id])
               console.log(chalk.black(chalk.bgRed("[ ERROR ]")), color("command", "turquoise"), color(`${prefix}${command}`, "turquoise"), color("tidak tersedia", "turquoise"));
             }
           }
@@ -144,7 +131,7 @@ Menampilkan source code bot yang dipakai`)
       }
     }
   } catch (err) {
-    m.reply(util.format(err));
+    message.reply(util.format(err));
   }
 };
 
