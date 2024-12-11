@@ -53,7 +53,7 @@ async function connectToWhatsApp(use_pairing_code = false) {
     markOnlineOnConnect: true,
 		generateHighQualityLinkPreview: true,
 		browser: Browsers.macOS('Chrome'),
-		
+    getMessage
 	});
 
 	store?.bind(sock.ev);
